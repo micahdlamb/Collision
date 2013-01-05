@@ -72,6 +72,8 @@ int main (int argc, char* argv[])
 		glutMainLoop();
 	} catch (string e){
 		cout << e << endl;
+		string pause;
+		cin >> pause;
 	}
 
 	return 0;

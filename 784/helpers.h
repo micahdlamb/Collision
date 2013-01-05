@@ -93,7 +93,7 @@ template <class T> struct Array2d {
 	void operator()(U cols, U rows){
 		this->cols = cols;
 		this->rows = rows;
-		delete v;
+		delete [] v;
 		v = new T[cols*rows];
 	}
 

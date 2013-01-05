@@ -118,7 +118,6 @@ struct Shader {
 		glShaderSource(sid, 1, &cstr, &size);
 		
 		GLint len = 0, success;
-		glGetShaderiv(sid, GL_COMPILE_STATUS, &success);
 		glCompileShader(sid);
 		glGetShaderiv(sid, GL_COMPILE_STATUS, &success);
 		glGetShaderiv(sid, GL_INFO_LOG_LENGTH, &len);
@@ -126,7 +125,6 @@ struct Shader {
 		log.resize(len);
 		glGetShaderInfoLog(sid, len, NULL, (GLchar*)log.c_str());
 		if (success){
-			glGetShaderiv(sid, GL_INFO_LOG_LENGTH, &len);
 			if (len > 1)
 				msg(string("warnings in ")+file,log);
 		} else
