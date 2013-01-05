@@ -42,7 +42,7 @@ struct MyFireworks : public Object {
 
 		looper(1);
 		looper.buffer(particles,sizeof(Particle)*MAX_PARTICLES);
-		delete particles;
+		delete [] particles;
 		looper.inout("Type1",1,GL_FLOAT,sizeof(Particle));
 		looper.inout("Position1",3,GL_FLOAT,sizeof(Particle),4);
 		looper.inout("Velocity1",3,GL_FLOAT,sizeof(Particle),16);
@@ -63,7 +63,7 @@ struct MyFireworks : public Object {
 
 		Texture1D* t = new Texture1D;
 		t->operator()(dirs,size,GL_RGB,GL_RGB,GL_FLOAT);
-		delete dirs;
+		delete [] dirs;
 		return t;
 	}
 

@@ -32,7 +32,7 @@ struct CubeMap : public Texture/*, public Framebuffer*/ {
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, GL_RGBA, width, height, 0, GL_RGBA, IL_UNSIGNED_BYTE, buffer);
 			ilDeleteImages  (1, &id);
 		}
-		delete buffer;
+		delete [] buffer;
 
 		//dont think I need mipmaps
 		//glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

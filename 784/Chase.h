@@ -46,7 +46,7 @@ struct Chase : public Object {
 
 		looper(5);
 		looper.buffer(particles,sizeof(Particle)*MAX_PARTICLES);
-		delete particles;
+		delete [] particles;
 		looper.inout("oType",1,GL_FLOAT,sizeof(Particle),0);
 		looper.inout("oColor",3,GL_FLOAT,sizeof(Particle),4);
 		looper.inout("oPos",3,GL_FLOAT,sizeof(Particle),16);
@@ -68,7 +68,7 @@ struct Chase : public Object {
 
 		Texture1D* t = new Texture1D;
 		t->operator()(dirs,size,GL_RGB,GL_RGB,GL_FLOAT);
-		delete dirs;
+		delete [] dirs;
 		return t;
 	}
 

@@ -170,7 +170,7 @@ template <class T> struct Array2d {
 	//move =
 	Array2d& operator=(Array2d&& other){
 		if (this != &other){
-			delete v;
+			delete [] v;
 			cols = other.cols;
 			rows = other.rows;
 			v = other.v;
@@ -181,7 +181,7 @@ template <class T> struct Array2d {
 
 	//destroooy
 	~Array2d(){
-		delete v;
+		delete [] v;
 	}
 };
 
