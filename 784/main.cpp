@@ -5,9 +5,9 @@ Scene* Scene::current=NULL;
 int main_window;
 uvec2 dim(1600,900);
 
-#include "lab3.h"
+//#include "lab3.h"
 //#include "Volume.h"
-//#include "Tessellation.h"
+#include "Tessellation.h"
 //#include "RayTracer.h"
 //#include "Bullet.h"
 
