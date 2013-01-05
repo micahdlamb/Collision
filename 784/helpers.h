@@ -144,13 +144,13 @@ template <class T> struct Array2d {
 		return true;
 	}
 
-	//copy constructor
+	//copy
 	Array2d(const Array2d &a):v(NULL){
 		operator()(a.cols, a.rows);
 		memcpy(v,a.v,a.bytes());
 	}
 
-	//move constructor
+	//move
 	Array2d(Array2d&& other){
 		cols = other.cols;
 		rows = other.rows;
@@ -159,6 +159,13 @@ template <class T> struct Array2d {
 	}
 
 	//=
+	Array2d& operator=(const Array2d& other){
+		if (this != &other){
+			operator()(other.cols, other.rows);
+			memcpy(v,other.v,other.bytes());
+		}
+		return *this;
+	}
 	
 	//move =
 	Array2d& operator=(Array2d&& other){
