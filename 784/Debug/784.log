@@ -1,0 +1,46 @@
+﻿Build started 12/24/2012 3:15:46 PM.
+     1>Project "C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\784\784.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Creating "Debug\collision.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I"C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\784\\include" /ZI /nologo /W3 /WX- /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /openmp /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
+         main.cpp
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\include\gl\glui.h(868): warning C4244: 'argument' : conversion from 'double' to 'GLfloat', possible loss of data
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\include\gl\glui.h(868): warning C4244: 'argument' : conversion from 'double' to 'GLfloat', possible loss of data
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\viewport.h(25): warning C4244: '=' : conversion from 'float' to 'GLint', possible loss of data
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\viewport.h(26): warning C4244: '=' : conversion from 'float' to 'GLint', possible loss of data
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\viewport.h(27): warning C4244: '=' : conversion from 'float' to 'GLint', possible loss of data
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\viewport.h(28): warning C4244: '=' : conversion from 'float' to 'GLint', possible loss of data
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\grid2d.h(67): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\grid2d.h(125): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\surface.h(257): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\surface.h(423): warning C4305: 'argument' : truncation from 'double' to 'float'
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\lab3.h(15): warning C4305: 'argument' : truncation from 'double' to 'float'
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\lab3.h(15): warning C4305: 'argument' : truncation from 'double' to 'float'
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\lab3.h(16): warning C4305: 'argument' : truncation from 'double' to 'float'
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\lab3.h(16): warning C4305: 'argument' : truncation from 'double' to 'float'
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\main.cpp(47): warning C4244: 'argument' : conversion from 'time_t' to 'unsigned int', possible loss of data
+     1>c:\users\micah\documents\visual studio 2010\projects\collision\784\helpers.h(271): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+                 c:\users\micah\documents\visual studio 2010\projects\collision\784\myterrain.h(60) : see reference to function template instantiation 'std::vector<_Ty> gridIndices<MyTerrain::I>(I,I,bool,bool)' being compiled
+                 with
+                 [
+                     _Ty=GLuint,
+                     I=MyTerrain::I
+                 ]
+       Link:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\Debug\collision.exe" /NOLOGO /LIBPATH:"C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\784\lib\bullet\Debug" /LIBPATH:"C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\784\\lib" freeglut.lib glew32.lib DevIL.lib ILU.lib ILUT.lib "glui32-debug.lib" BulletDynamics_Debug.lib BulletCollision_Debug.lib LinearMath_Debug.lib /MANIFEST /ManifestFile:"Debug\collision.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\Debug\collision.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\Debug\collision.lib" /MACHINE:X86 Debug\Clock.obj
+         Debug\helpers.obj
+         Debug\main.obj
+         Debug\GLState.obj
+         LINK : C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\Debug\collision.exe not found or not built by the last incremental link; performing full link
+         784.vcxproj -> C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\Debug\collision.exe
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\Debug\collision.exe;#1" /manifest Debug\collision.exe.intermediate.manifest
+       FinalizeBuildStatus:
+         Deleting file "Debug\collision.unsuccessfulbuild".
+         Touching "Debug\collision.lastbuildstate".
+     1>Done Building Project "C:\Users\micah\Documents\Visual Studio 2010\Projects\Collision\784\784.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:03.67
