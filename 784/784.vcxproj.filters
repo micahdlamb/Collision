@@ -132,6 +132,8 @@
       <Filter>784</Filter>
     </ClInclude>
     <ClInclude Include="Bullet.h" />
+    <ClInclude Include="RayTracer2.h" />
+    <ClInclude Include="RayTracer3.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -284,6 +286,12 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="background.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="rayTracer2.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="rayTracer3.frag">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

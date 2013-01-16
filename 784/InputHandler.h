@@ -37,19 +37,23 @@ struct InputHandler {
 struct FPInput : public InputHandler, public Viewer {
 	float moveSpeed;
 	float sensitivity;
+	vec3 vel;
 
 	FPInput(float moveSpeed=1, float sensitivity=.1):moveSpeed(moveSpeed),sensitivity(sensitivity){
 
 	}
 
 	void moveForward(float dist){
+		vel = forward * dist / Clock::delta;
 		pos += forward * dist;
 	}
 
 	void strafeRight(float dist){
+		vel = right() * dist / Clock::delta;
 		pos += right() * dist;
 	}
 	void moveUp(float dist){
+		vel = up() * dist / Clock::delta;
 		pos += up() * dist;
 	}
 
@@ -78,6 +82,7 @@ struct FPInput : public InputHandler, public Viewer {
 
 	virtual void frame(){
 		float move = moveSpeed * Clock::delta;
+		vel = vec3(0);
 		for (int i=0; i < 256; i++){
 			if (keys[i])
 				switch (i) {

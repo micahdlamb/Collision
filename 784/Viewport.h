@@ -59,8 +59,7 @@ struct ViewportManager {
 	int w, h;
 
 	void operator()(){
-		glEnable(GL_SCISSOR_TEST);
-		Clock::init();
+
 	}
 
 	void add(Viewport* viewport){
@@ -78,7 +77,6 @@ struct ViewportManager {
 	}
 
 	void draw(){
-		Clock::frame();
 		for (size_t i=0; i < viewports.size(); i++){
 			Viewport* v = viewports[i];
 			v->enable();

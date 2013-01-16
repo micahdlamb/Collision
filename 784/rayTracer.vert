@@ -15,8 +15,6 @@ layout(std140) uniform Global {
 	Light lights[6];
 };
 
-uniform mat4 worldTransform;
-uniform mat3 normalTransform;
 uniform mat4 viewTransform;
 
 out vec3 localPos;
@@ -29,8 +27,6 @@ void main(void)
 	m[3] = vec4(0,0,-.5,1);
 	m =  inverse(viewTransform) * m;
 
-	localPos = pos;
 	worldPos = vec3(m * vec4(pos,1));
-	normal = normalize(normalTransform * vec3(0,0,1));
 	gl_Position = eye * vec4(worldPos, 1);
 }

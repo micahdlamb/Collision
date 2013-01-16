@@ -4,11 +4,13 @@ Scene* Scene::current=NULL;
 
 int main_window;
 uvec2 dim(1600,900);
+#define NUM_BUFFERS GLUT_DOUBLE
 
 //#include "lab3.h"
 //#include "Volume.h"
-#include "Tessellation.h"
+//#include "Tessellation.h"
 //#include "RayTracer.h"
+#include "RayTracer3.h"
 //#include "Bullet.h"
 
 //outdated
@@ -20,7 +22,7 @@ int main (int argc, char* argv[])
 {
 	glutInit(&argc, argv);
 	glutInitWindowSize(dim.x,dim.y);
-	glutInitDisplayMode(GLUT_RGBA|GLUT_ALPHA|GLUT_DOUBLE|GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_RGBA|GLUT_ALPHA|NUM_BUFFERS|GLUT_DEPTH);
 	main_window = glutCreateWindow(title);
 
 	/*
