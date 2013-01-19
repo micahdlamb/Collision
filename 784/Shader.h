@@ -68,8 +68,8 @@ struct Shader {
 		GLuint global =  glGetUniformBlockIndex(gid, name);
 		if (global != GL_INVALID_INDEX)
 			glUniformBlockBinding(gid, global, binding);
-		else
-			error(string(name) + " can't be bound to " + itos(binding));
+		//else
+			//error(string(name) + " can't be bound to " + itos(binding));
 	}
 
 	~Shader(){

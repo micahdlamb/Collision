@@ -132,8 +132,10 @@
       <Filter>784</Filter>
     </ClInclude>
     <ClInclude Include="Bullet.h" />
-    <ClInclude Include="RayTracer2.h" />
-    <ClInclude Include="RayTracer3.h" />
+    <ClInclude Include="BallManager.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="Glass-Balls.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -288,10 +290,7 @@
     <None Include="background.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="rayTracer2.frag">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="rayTracer3.frag">
+    <None Include="glass-balls.frag">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

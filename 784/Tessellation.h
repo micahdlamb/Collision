@@ -1,113 +1,17 @@
 #include "MyWindow.h"
 #include "MyFireworks.h"
-
+#include "BallManager.h"
 const char* title = "Tessellation";
 
 const int NUMOBJECTS = 500;
 
-struct Ball {
-	Ball(vec3 pos, vec3 vel, float mass):pos(pos),vel(vel),mass(mass){}
-	vec3 pos, vel;
-	float mass;
-};
-
-struct Thing : public Pickable, public Ball {
-	Uniform3f color;
-	Uniform1i asleep;
-	UniformSampler shadowMap;
-	
-	float still;
-	int sleepTicks;
-	int stillTicks;
-
-	Thing(VAO* vao, Texture* shadowMap, int id, vec3 pos, float size, vec3 color, SHADER_PARAMS):
-		Pickable(translate(mat4(1),pos)*scale(mat4(1),vec3(size)), id, SHADER_CALL)
-		,Ball(pos,vec3(0),0)
-		,still(.5)
-		,stillTicks(0)
-		,sleepTicks(100)
-	{
-		setVAO(vao);
-		asleep("asleep",this,0);
-		this->shadowMap("shadowMap",this,shadowMap);
-		mass = dynamic_cast<BoundingSphere*>(boundingVolume)->radius;
-		this->color("color",this,color);
-		enableShadowCast();
-	}
-	void move(vec3 acc=vec3(0)){
-		if (trySleep()) return;
-		vel += acc * Clock::delta;
-		pos += vel * Clock::delta;
-		updateBV();
-	}
-
-	mat4 getWorldTransform(){
-		mat4 m = Object::getWorldTransform();
-		m[3] = vec4(pos,1);//only change translation part
-		return m;
-	}
-
-	void updateBV(){
-		vao->boundingVolume->transform(getWorldTransform(), boundingVolume);
-	}
-
-	void commit(){
-		if (NaN(pos.x) || NaN(vel.x)){
-			cout << "wierd ball fuck up" << endl;
-			pos = vec3(0,100,0);
-			vel = vec3(0);
-		}
-
-		if (!sleeping())
-			setWorldTransform(getWorldTransform());
-		setAsleep(sleeping()?1:0);
-	}
-
-	void setAsleep(int v){
-		Shader::enable();
-		asleep = v;
-	}
-
-	/*
-	handle the sleep optimization
-	once object is moving slower than still for more than sleepTicks frames set it to be asleep
-	Once asleep:
-		the object is no longer affected by gravity or moves, no need to update bounding volume
-		no need to check for intersection between 2 sleeping objects
-		no more need to check for intersection with terrain and compute reflections
-	*/
-	bool isStill(){
-		return dot(vel,vel) < still;
-	}
-
-	bool trySleep(){
-		if (isStill())
-			stillTicks++;
-		else
-			wakeUp();
-
-		Object::boundingVolume->sleeping = sleeping();
-		if (sleeping())
-			vel = vec3(0);
-		return sleeping();
-	}
-
-	bool sleeping(){
-		return stillTicks > sleepTicks;
-	}
-	
-	void wakeUp(){
-		stillTicks = 0;
-		Object::boundingVolume->sleeping = false;
-	}
-};
-
-struct Tessellation : public Viewport, public Scene, public TerrainWalker, public Grid2D::IntersectionHandler {
+struct Tessellation : public Viewport, public Scene, public TerrainWalker {
 	CubeBackground background;
 	CubeMap* backgrounds[3];
 
 	Light* light;
 
+	vec2 bounds;
 	vec3 terrainDim;
 	MyTerrain* terrain;
 
@@ -123,15 +27,13 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 	Texture* reflection;
 	TexturedSquare tex;
 
-	//pickable cubes
-	vector<Thing*> objects;
-	vector<IBoundingVolume*> bvs;
+	BallManager balls;
+
 	Framebuffer pickFb;
 	int dragIndex;
 
-	Thing* boundingSphere;
-
-	Grid2D grid;
+	Ball* boundingSphere;
+	float gravity;
 
 	Tessellation(float x, float y, float w, float h):
 		Viewport(x,y,w,h)
@@ -180,11 +82,10 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 		glPatchParameteri(GL_PATCH_VERTICES, 4);
 		terrainDim = vec3(100,15,100);
 		terrain = new MyTerrain("valley1.hm",scale(mat4(1),terrainDim),/*backgrounds[2]*/reflection,25, &light->depth);
-		
-		vec2 bounds = vec2(terrainDim.x,terrainDim.z) * .5f;
-		grid(-bounds,bounds,uvec2(25,25));
+		bounds = vec2(terrainDim.x,terrainDim.z) * .5f;
 
-		TerrainWalker::operator()(terrain,10,.1,2,15,25);
+		TerrainWalker::operator()(terrain,10,.1,2,15,40);
+		balls(-bounds, bounds, uvec2(25,25));
 
 		pickFb(new Texture(NULL,2048,2048,GL_RGB32UI,GL_RGB_INTEGER,GL_UNSIGNED_INT));
 
@@ -218,13 +119,11 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 					*/
 				}
 			}
-			auto thing = new Thing(vao,&light->depth,i,pos,size,vec3(rand0_1,rand0_1,rand0_1),"object.vert","object.frag");
-			objects.push_back(thing);
-			bvs.push_back(thing->boundingVolume);
+			balls.add(new Ball(vao,&light->depth,i,pos,size,vec3(rand0_1,rand0_1,rand0_1),"object.vert","object.frag"));
 		}
 		printGLErrors("/create objects");
 
-		boundingSphere = new Thing(Shapes::sphere(3),&light->depth,-1,vec3(0),1,vec3(1,0,0),"object.vert","object.frag");
+		boundingSphere = new Ball(Shapes::sphere(3),&light->depth,-1,vec3(0),1,vec3(1,0,0),"object.vert","object.frag");
 
 		background(backgrounds[2]);
 		printGLErrors("/init");
@@ -240,8 +139,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 		globals.syncEye(eye(),ep);//hack to make sure scene tessellated same in shadow map as main view frustrum
 		light->bind();
 		terrain->shadowDraw();
-		for (auto i=objects.begin(); i!=objects.end(); i++)
-			(*i)->shadowDraw();
+		balls.shadowDraw();
 		light->unbind();
 		popEye();
 	}
@@ -258,14 +156,9 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 		popView();
 	}
 
-	void drawObjects(){
-		for (auto i=objects.begin(); i!=objects.end(); i++)
-			(*i)->draw();
-	}
-
 	void drawBoundingSpheres(){
 		boundingSphere->setAsleep(1);
-		for (auto i=objects.begin(); i!=objects.end(); i++){
+		for (auto i=balls.objects.begin(); i!=balls.objects.end(); i++){
 			if ((*i)->vao == Shapes::sphere()) continue;
 			auto s = dynamic_cast<BoundingSphere*>((*i)->boundingVolume);
 			boundingSphere->setWorldTransform(translate(mat4(1),s->center) * scale(mat4(),vec3(s->radius)));
@@ -279,7 +172,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 		frame();
 		Scene::frame();
 		TerrainWalker::frame();
-		syncObjects();
+		balls.sync();
 		drawShadows();
 		drawReflection();
 		((Scene*)this)->draw();
@@ -297,14 +190,14 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 	}
 
 	void Scene::draw(){
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
 		background.draw();
 		glPushAttrib(GL_POLYGON_BIT);
 		if (wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 		terrain->draw();
-		drawObjects();
+		balls.draw();
 		//drawBoundingSpheres();
-		chase.setChasePt((objects[0]->getWorldTransform() * vec4(0,0,0,1)).swizzle(X,Y,Z));
+		chase.setChasePt((balls.objects[0]->getWorldTransform() * vec4(0,0,0,1)).swizzle(X,Y,Z));
 		chase.draw();
 		glPopAttrib();
 
@@ -312,153 +205,11 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 	}
 
 	void moveObjects(){
-		float damp = .5;
-		for (auto i=objects.begin(); i != objects.end(); i++){
-			if (*(*i)->selected) continue;
-			(*i)->move(TerrainWalker::gravity);
-		}
-
-		collideObjects();
-
-		//bound & ball characteristics of the eye
-		BoundingSphere eyeBound(viewer->pos - vec3(0, .5 * viewerHeight, 0), viewerHeight*.5);
-		Ball eyeBall(Viewer::pos,TerrainWalker::vel,10);
-
-		#pragma omp parallel for
-		for (int i=0; i < objects.size(); i++){
-			auto t1 = objects[i];
-
-			//collide with eye
-			auto r = eyeBound.intersect(t1->boundingVolume);
-			if (r.intersect && dot(t1->vel - eyeBall.vel, eyeBall.pos - t1->pos) > FLT_EPSILON){
-				//cout<<"eye collide"<<endl;
-				collide(*t1,eyeBall,eyeBall.pos - t1->boundingVolume->center);
-			}
-			//TerrainWalker::vel = eyeBall.vel;
-
-			if (t1->sleeping()) continue;
-
-			//keep in terrain
-			auto& pos = t1->pos;
-			auto& vel = t1->vel;
-			auto s = dynamic_cast<BoundingSphere*>(t1->boundingVolume);
-			auto bounds = terrainDim * .5f - 1.f;
-			if (pos.x > bounds.x){
-				pos.x = bounds.x;
-				vel.x *= -damp;
-			}
-			if (pos.x < -bounds.x){
-				pos.x = -bounds.x;
-				vel.x *= -damp;
-			}
-			if (pos.z > bounds.z){
-				pos.z = bounds.z;
-				vel.z *= -damp;
-			}
-			if (pos.z < -bounds.z){
-				pos.z = -bounds.z;
-				vel.z *= -damp;
-			}
-
-			float y = terrain->getY(s->center.x,s->center.z) + s->radius;
-			if (s->center.y < y && dot(vel,vel) > 0){
-				pos.y = y + pos.y - s->center.y;
-				auto normal = terrain->getNormal(s->center.x,s->center.z);
-				vel = reflect(t1->vel,normal) * (1 - dot(normalize(-vel), normal) * (1-damp));
-			}
-		}
+		balls.animate(Clock::delta, TerrainWalker::gravity);
+		balls.collide();
+		balls.collideWithTerrain(terrain,bounds-vec2(1));
+		balls.collideWithViewer(Viewer::pos - vec3(0, .5 * TerrainWalker::viewerHeight, 0), TerrainWalker::vel, TerrainWalker::viewerHeight*.5);
 	}
-
-	//update shaders with new object positions
-	void syncObjects(){
-		for (auto i=objects.begin(); i != objects.end(); i++)
-			(*i)->commit();
-	}
-
-	//pass bounding volumes to grid intersection routine
-	void collideObjects(){
-		grid.intersect(bvs, this);
-	}
-
-	//handle intersection by calling handle collision
-	void handleIntersection(Grid2D::Result r){
-		auto& b1 = *objects[r.first];
-		auto& b2 = *objects[r.second];
-		handleCollision(b1,b2);
-	}
-
-	//separate objects and make sure they are moving towards each other, then collide them
-	void handleCollision(Thing& t1, Thing& t2){
-		auto s1 = dynamic_cast<BoundingSphere*>(t1.boundingVolume);
-		auto s2 = dynamic_cast<BoundingSphere*>(t2.boundingVolume);
-
-		auto v = s2->center - s1->center;
-		float dist = length(v);
-		if (dist > 0){
-			v = normalize(v);
-
-			//separate bvs
-			float overlap = s1->radius + s2->radius - dist;
-			if (!t1.sleeping())
-				t1.pos -= v * overlap * .5f * (dot(t1.vel,t1.vel) < 5 ? .2f : 1.f);
-			if (!t2.sleeping())
-				t2.pos += v * overlap * .5f * (dot(t2.vel,t2.vel) < 5 ? .2f : 1.f);
-
-			//do nothing if movement very slow or moving away from each other
-			if (dot(t1.vel - t2.vel, t2.pos - t1.pos) <= FLT_EPSILON) return;//fix balls getting stuck in each other
-			collide(t1, t2, v);
-		}
-	}
-
-	//conservation of momentum (without angular velocity yet)
-	static void collide(Ball& b1, Ball& b2, vec3 n){
-		float e = 1;
-		float v1i = dot(b1.vel, n);
-		float v2i = dot(b2.vel, n);
-
-		vec3 v = b1.vel - b2.vel;
-		float j = (-(1+e)*dot(v,n)) / (dot(n,n)*(1/b1.mass + 1/b2.mass));
-		b1.vel += (j / b1.mass)*n;
-		b2.vel -= (j / b2.mass)*n;
-	}
-
-	/*
-	//conservation of momentum (without angular velocity yet)
-	static void collide(Ball& b1, Ball& b2){
-		float e = 1;
-		auto n = b2.pos - b1.pos;//normalize(b2.pos - b1.pos);
-		float v1i = dot(b1.vel, n);
-		float v2i = dot(b2.vel, n);
-
-		vec3 v = b1.vel - b2.vel;
-		float j = (-(1+e)*dot(v,n)) / (dot(n,n)*(1/b1.mass + 1/b2.mass));
-		b1.vel += (j / b1.mass)*n;
-		b2.vel -= (j / b2.mass)*n;
-	}
-
-
-	static void collide2(Ball& b1, Ball& b2){
-		//derived by hand
-		auto n = normalize(b2.pos - b1.pos);
-		float v1i = dot(b1.vel, n);
-		float v2i = dot(b2.vel, n);
-
-		float momentum = b1.mass * v1i + b2.mass * v2i;
-		float energy = .5 * b1.mass * v1i * v1i + .5 * b2.mass * v2i * v2i;
-
-		float s1, s2;
-		float a = .5 * b2.mass * b2.mass  / b1.mass + .5 * b2.mass;
-		float b = -momentum * b2.mass / b1.mass;
-		float c = -energy + .5 * momentum * momentum / b1.mass;
-		solveQuadratic(s1, s2, a, b, c);
-
-		float v2f = s2;
-		float v1f = (momentum - b2.mass * v2f) / b1.mass;
-
-		b1.vel += (v1f - v1i) * n;
-		b2.vel += (v2f - v2i) * n;
-	}
-	*/
 
 	void frame(){
 		
@@ -487,7 +238,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 
 	void select(int i){
 		unselect();
-		auto o = objects[i];
+		auto o = balls.objects[i];
 		o->wakeUp();
 		o->setSelected(1);
 		o->vel = vec3(0);
@@ -496,7 +247,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 
 	void unselect(){
 		if (dragIndex != -1){
-			((Pickable*)(objects[dragIndex]))->setSelected(0);
+			((Pickable*)(balls.objects[dragIndex]))->setSelected(0);
 			dragIndex = -1;
 		}
 	}
@@ -513,16 +264,14 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 			pickFb.bind();
 			Viewport::enable();
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			for (auto i=objects.begin(); i!=objects.end(); i++)
-				if (dynamic_cast<Pickable*>(*i))
-					((Pickable*)(*i))->pickDraw();
+			balls.pickDraw();
 			Viewport::disable();
 			pickFb.unbind();
 
 			uvec3 index;
 			pickFb.read(&index,x,y,1,1,GL_RGB_INTEGER,GL_UNSIGNED_INT);
 			//cout << "clicked: " << index.r << " " << index.g << " " << index.b << endl;
-			if (index.r < objects.size())
+			if (index.r < balls.objects.size())
 				select(index.r);
 		}
 
@@ -535,7 +284,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 
 		//drag with right mouse
 		if (mouseDown[1] && dragIndex != -1){
-			auto o = objects[dragIndex];
+			auto o = balls.objects[dragIndex];
 			vec3 move;
 			if (keys['r']){
 				move = forward * mouseDelta.y * .015f;
@@ -584,7 +333,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 				vel = vec3(0);
 				break;
 			case 'i':
-				cout << "intersections: " << grid.intersections << endl;
+				cout << "intersections: " << balls.grid.intersections << endl;
 				break;
 			case 'p':
 				cout << pos.x << "," << pos.y << "," << pos.z << endl;
@@ -613,8 +362,6 @@ void init_glui(){}
 
 void display()
 {
-	glClearColor(.9f,.8f,.7f,1);
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	win.draw();
 	printGLErrors("/display");
 }
