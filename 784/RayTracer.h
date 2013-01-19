@@ -113,7 +113,7 @@ struct RayTracer : public Viewport, public Scene, public FPInput {
 	}
 
 	virtual void passiveMouseMove(int x, int y){
-		//inputHandler.passive
+
 	}
 
 	virtual void keyDown (unsigned char key, int x, int y) {
@@ -141,7 +141,6 @@ struct RayTracer : public Viewport, public Scene, public FPInput {
 
 MyWindow win;
 RayTracer rt(0,0,1,1);
-
 
 void init(void)
 {

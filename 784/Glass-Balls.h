@@ -4,7 +4,7 @@
 const char* title = "Glass Balls";
 
 const int NUMOBJECTS = 10;
-#define NUM_BUFFERS GLUT_DOUBLE
+#define NUM_BUFFERS GLUT_SINGLE
 
 #define GRAVITY vec3(0,-100.f,0)
 #define VIEWER_RADIUS .5
@@ -126,11 +126,11 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 	void Viewport::draw(){
 		printGLErrors("draw");
 		frame();
-		Scene::frame();
 		FPInput::frame();
 		syncObjects();
-		spheres.sync();
+		Scene::frame();
 
+		glClear(GL_DEPTH_BUFFER_BIT);
 		((Scene*)this)->draw();
 
 		Clock::printFps(500);
@@ -138,7 +138,6 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 	}
 
 	void Scene::draw(){
-		glDisable(GL_DEPTH_TEST);
 		shader.enable();
 		viewTransform = matrix();
 		Shapes::square()->draw();
@@ -146,19 +145,18 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 	}
 
 	void frame(){
-		FPInput::frame();
 		shader.enable();
 		if (keys['.'])
-			noise = *noise * (1 + Clock::delta);
+			noise = std::min(2.f, *noise + .2f*Clock::delta);
 		if (keys[','])
-			noise = *noise * (1 - Clock::delta);
+			noise = std::max(0.f, *noise - .2f*Clock::delta);
 			
 		if (keys['c'])
 			Scene::globals.lights[0].color = rainbowColors(.01);
 		if (keys['\''])
-			alpha = std::min(1.f, *alpha + .5f*Clock::delta);
+			alpha = std::min(1.f, *alpha + 1.f*Clock::delta);
 		if (keys[';'])
-			alpha = std::max(0.01f, *alpha - .5f*Clock::delta);
+			alpha = std::max(0.1f, *alpha - 1.f*Clock::delta);
 		if (keys['l'])
 			rIndex = std::min(2.f, *rIndex + .3f*Clock::delta);
 		if (keys['k'])
@@ -182,6 +180,7 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 			spheres[i].color = *balls.objects[i]->color;
 			spheres[i].radius = dynamic_cast<BoundingSphere*>(balls.objects[i]->boundingVolume)->radius;
 		}
+		spheres.sync();
 	}
 
 
@@ -212,7 +211,7 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 		if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
 			pickFb.bind();
 			Viewport::enable();
-			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			balls.pickDraw();
 			Viewport::disable();
 			pickFb.unbind();
@@ -295,10 +294,9 @@ Ballz ballz(0,0,1,1);
 
 void init(void)
 {
-	ballz();
 	win();
+	ballz();
 	win.add(&ballz);
-	Clock::maxDelta = 1.f/55;
 }
 
 void init_glui(){}
