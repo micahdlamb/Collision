@@ -22,6 +22,7 @@ uniform sampler2D perlin;
 uniform float rIndex;
 uniform float noise;
 uniform float alpha;
+uniform float timeNoise;
 
 in vec3 localPos;
 in vec3 worldPos;
@@ -67,7 +68,8 @@ struct QuadraticResult {
 };
 
 float rand(vec3 v){
-	return texture(perlin,v.xy + v.yz).x;
+	float tn = sin(time) * timeNoise;
+	return texture(perlin,v.xy + v.yz).x * noise + tn;
 	//return fract(sin(gl_FragCoord.x * 12.9898 + gl_FragCoord.y * 78.233) * 43758.5453 * time)-.5;
 	/*
 	return vec3(
@@ -241,10 +243,10 @@ vec3 shade(Ray ray, Intersection i, out Ray next){
 		color += lightColor * spec * pow(max(0.0, dot(reflectDir, -ray.direction)), shininess);
 
 	//vec3 n = noise * rand();
-	float ri = rIndex + noise * rand(i.pt);
+	float ri = rIndex + rand(i.pt);
 	next.direction = refract(ray.direction, i.normal, i.inside ? ri : 1/ri);
 	next.start = i.pt + EPS * -1 * i.normal;
-	//color += trace(r).rgb * ref;
+	//next.start = i.pt + EPS * next.direction;
 
 	return vec3(color);
 }

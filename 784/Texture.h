@@ -150,7 +150,7 @@ struct Texture1D : public Texture {
 
 	Texture1D():Texture(GL_TEXTURE_1D){}
 #define PARAMS void* data, int width, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, GLenum wrap=GL_REPEAT, bool mipmaps=false
-	Texture1D(PARAMS):Texture(GL_TEXTURE_3D){
+	Texture1D(PARAMS):Texture(GL_TEXTURE_1D){
 		operator()(data,width,internalFormat,format,type,wrap,mipmaps);
 	}
 

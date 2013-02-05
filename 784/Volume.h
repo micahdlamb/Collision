@@ -1,9 +1,84 @@
 #include "MyWindow.h"
 //#include "intrin.h"
+#include <limits.h>
 
 const char* title = "Micah Lamb's Volumez";
 
-struct Volumez : public Viewport, public Scene, public FPInput {
+class Volume {
+public:
+	U x, y, z;
+	float* vals;
+	vec3* gradients;
+	typedef detail::tvec3<uchar> ucvec3;
+	ucvec3 colors[256];
+
+	Volume(string vol, U x, U y, U z):x(x),y(y),z(z){
+		auto buf = new uchar[x*y*z];
+		vals = new float[x*y*z];
+		gradients = new vec3[x*y*z];//hopefully default constuctor initializes to vec3(0)
+
+		fstream in(vol, ios::in | ios::binary);
+		if (!in.is_open()) error(string("can't open file: ") + vol);
+		in.read((char*)buf, x*y*z*sizeof(uchar));
+		//convert to float
+		for (U i=0; i < x; i++)
+			for (U j=0; j < y; j++)
+				for (U k=0; k < z; k++){
+					U ii = index(i,j,k);
+					vals[ii] = buf[ii] / 256.f;
+				}
+		//calc gradients
+		for (U i=1; i < x-1; i++)
+			for (U j=1; j < y-1; j++)
+				for (U k=1; k < z-1; k++){
+					gradient(i,j,k) = vec3(
+						val(i+1,j,k) - val(i-1,j,k)
+						,val(i,j+1,k) - val(i,j-1,k)
+						,val(i,j,k+1) - val(i,j,k-1)
+					);
+				}
+	}
+
+	void loadColors(string file){
+		ifstream fin(file);
+		if (fin.fail())
+			error(string("unable to open off file: ") + file);
+		stringstream ss;
+		string line;
+		int index;
+		uvec3 v;
+		while (getline(fin, line)){
+			ss.str("");
+			ss.clear();
+			ss << line;
+			ss >> index;
+			ss >> v.x;
+			ss >> v.y;
+			ss >> v.z;
+			colors[index] = v;
+		}
+	}
+
+	U index(U i, U j, U k){
+		//return i*y*z + j*z + k;
+		return k*x*y + i*x + j;
+	}
+
+	float& val(U i, U j, U k){
+		return vals[index(i,j,k)];
+	}
+	
+	vec3& gradient(U i, U j, U k){
+		return gradients[index(i,j,k)];
+	}
+
+	~Volume(){
+		delete [] vals;
+		delete [] gradients;
+	}
+};
+
+struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 	Shader shader;
 	UniformMat4 worldTransform;
 	UniformMat4 inverseTransform;
@@ -11,16 +86,19 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 	Uniform1f delta;
 	Uniform1f absorbtion;
 	Uniform1f threshold;
+	Uniform1f density_gradient_mix;
+	Uniform1f brightness;
 
-	UniformSampler volume;
-	UniformSampler normals;
+	UniformSampler densities;
+	UniformSampler gradients;
+	UniformSampler colors;
 
 	CubeBackground background;
 	CubeMap* backgrounds[3];
 
 	float nearPlane, farPlane, fovY;
 
-	Volumez(float x, float y, float w, float h):
+	VolumeRenderer(float x, float y, float w, float h):
 		Viewport(x,y,w,h)
 		,nearPlane(.1f), farPlane(1001.f), fovY(60.f)
 	{}
@@ -28,14 +106,16 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 	void operator()(){
 		Scene::operator()(this);
 		//shader("volume.vert", "volume.frag");
-		shader("brain.vert", "brain.frag");
-		shader.enable();
+		shader("volume.vert", "volume.frag");
 		worldTransform("worldTransform",&shader);
 		inverseTransform("inverseTransform",&shader);
 		normalTransform("normalTransform",&shader);
 		delta("delta",&shader,.005);
-		absorbtion("absorbtion",&shader,10);
-		threshold("threshold",&shader,.01);
+		absorbtion("absorbtion",&shader,20);
+		threshold("threshold",&shader,.015);
+		density_gradient_mix("density_gradient_mix",&shader, 0);
+		brightness("brightness",&shader,2);
+
 		Scene::globals.lights[0].color = vec3(1,1,1);
 		Scene::globals.lights[0].pos = vec3(0,0,25);
 
@@ -43,10 +123,11 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 		glCullFace(GL_FRONT);
 
 		//volume("volume",&shader,gen3dTexture());
-		Texture *v, *n;
-		load3dBrain(v,n);
-		volume("volume",&shader,v);
-		normals("normals",&shader,n);
+		Texture *d, *g, *c;
+		load(d,g,c);
+		densities("densities",&shader,d);
+		gradients("gradients",&shader,g);
+		colors("colors",&shader,c);
 
 		#define STR(x) #x
 		#define CM(file) STR(cubemaps/clouds/##file)
@@ -57,139 +138,64 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 		char* deadmeat[] = {CM(px.jpg),CM(nx.jpg),CM(py.jpg),CM(ny.jpg),CM(pz.jpg),CM(nz.jpg)};
 		backgrounds[1] = new CubeMap(deadmeat, IL_ORIGIN_UPPER_LEFT);
 
-		#define CM(file) STR(cubemaps/misc/##file)
-		char* oil[] = {CM(oil.jpg),CM(oil.jpg),CM(oil.jpg),CM(oil.jpg),CM(oil.jpg),CM(oil.jpg)};
-		backgrounds[2] = new CubeMap(oil, IL_ORIGIN_LOWER_LEFT);
+		#define CM(file) STR(cubemaps/hills/##file)
+		char* hills[] = {CM(px.png),CM(nx.png),CM(py.png),CM(ny.png),CM(pz.png),CM(nz.png)};
+		backgrounds[2] = new CubeMap(hills, IL_ORIGIN_UPPER_LEFT);
+		#undef CM
 
 		background(backgrounds[0]);
 	}
 
-	Texture* gen3dTexture(){
-		int VOLUME_TEX_SIZE = 128;
-		int size = VOLUME_TEX_SIZE*VOLUME_TEX_SIZE*VOLUME_TEX_SIZE* 4;
-		GLubyte *data = new GLubyte[size];
+	Texture *bonsai_densities, *bonsai_gradients, *bonsai_colors;
+	Texture *chest_densities, *chest_gradients, *chest_colors;
 
-		for(int x = 0; x < VOLUME_TEX_SIZE; x++)
-		{for(int y = 0; y < VOLUME_TEX_SIZE; y++)
-		{for(int z = 0; z < VOLUME_TEX_SIZE; z++)
-		{
-			data[(x*4)   + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = z*2;
-			data[(x*4)+1 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = y*2;
-			data[(x*4)+2 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-			data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 25;
-	  	
-			vec3 p = vec3(x,y,z)- vec3(VOLUME_TEX_SIZE-20,VOLUME_TEX_SIZE-30,VOLUME_TEX_SIZE-30);
-			bool test = (length(p) < 42);
-			//test = false;
-			if(test)
-				data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 0;
+	void load(Texture*& densities, Texture*& gradients, Texture*& colors){
+		Volume bonsai("volumes/bonsai.vol", 256, 256, 128);
+		bonsai.loadColors("volumes/bonsai.colors");
+		bonsai_densities = new Texture3D(bonsai.vals,bonsai.x,bonsai.y,bonsai.z,1,GL_RED,GL_FLOAT);
+		bonsai_gradients = new Texture3D(bonsai.gradients,bonsai.x,bonsai.y,bonsai.z,GL_RGB32F,GL_RGB,GL_FLOAT);
+		bonsai_colors = new Texture1D(bonsai.colors, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
 
-			p =	vec3(x,y,z)- vec3(VOLUME_TEX_SIZE/2,VOLUME_TEX_SIZE/2,VOLUME_TEX_SIZE/2);
-			test = (length(p) < 24);
-			//test = false;
-			if(test)
-				data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 0;
 
+		Volume chest("volumes/chest.vol", 256, 256, 279);
+		chest.loadColors("volumes/chest.colors");
+		densities = chest_densities = new Texture3D(chest.vals,chest.x,chest.y,chest.z,1,GL_RED,GL_FLOAT);
+		gradients = chest_gradients = new Texture3D(chest.gradients,chest.x,chest.y,chest.z,GL_RGB32F,GL_RGB,GL_FLOAT);
+		colors = chest_colors = new Texture1D(chest.colors, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
+		setWorldTransform(scale(mat4(1), vec3(1, 1, 279.f/256)));
+		printGLErrors("after color");
 		
-			if(x > 20 && x < 40 && y > 0 && y < VOLUME_TEX_SIZE && z > 10 &&  z < 50)
-			{
-			
-				data[(x*4)   + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 100;
-				data[(x*4)+1 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-				data[(x*4)+2 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = y*2;
-				data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 255;
-			}
+		
+		/*
+		//Volume vol("volumes/bonsai.vol", 256, 256, 128);
+		//vol.loadColors("volumes/bonsai.colors");
+		Volume vol("volumes/chest.vol", 256, 256, 279);
+		vol.loadColors("volumes/chest.colors");
+		setWorldTransform(scale(mat4(1), vec3(1, 1, 279.f/256)));
 
-			if(x > 50 && x < 70 && y > 0 && y < VOLUME_TEX_SIZE && z > 10 &&  z < 50)
-			{
-			
-				data[(x*4)   + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-				data[(x*4)+1 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-				data[(x*4)+2 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = y*2;
-				data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 255;
-			}
-
-			if(x > 80 && x < 100 && y > 0 && y < VOLUME_TEX_SIZE && z > 10 &&  z < 50)
-			{
-			
-				data[(x*4)   + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 250;
-				data[(x*4)+1 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 70;
-				data[(x*4)+2 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = y*2;
-				data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 255;
-			}
-
-			p =	vec3(x,y,z)- vec3(24,24,24);
-			test = (length(p) < 40);
-			//test = false;
-			if(test)
-				data[(x*4)+3 + (y * VOLUME_TEX_SIZE * 4) + (z * VOLUME_TEX_SIZE * VOLUME_TEX_SIZE * 4)] = 0;
-
-		}}}
-
-		Texture3D* t = new Texture3D(data, VOLUME_TEX_SIZE,VOLUME_TEX_SIZE,VOLUME_TEX_SIZE);
-		delete data;
-		return t;
+		densities = new Texture3D(vol.vals,vol.x,vol.y,vol.z,1,GL_RED,GL_FLOAT);
+		gradients = new Texture3D(vol.gradients,vol.x,vol.y,vol.z,GL_RGB32F,GL_RGB,GL_FLOAT);
+		colors = new Texture1D(vol.colors, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
+		*/
 	}
 
-	void load3dBrain(Texture*& volume, Texture*& normals){
-		auto brain = new GLushort[109 * 256 * 256];
-		auto norms = new vec3[109 * 256 * 256];
-		for (int i=0; i < 109; i++){
-			string file=string("MRbrain/MRbrain.") + itos(i+1);
-			fstream in(file, ios::in | ios::binary);
-			if (!in.is_open()) cout << "can't open file: " << file << endl;
-			in.read((char*)(brain+(i*256*256)),256*256*sizeof(GLushort));
-			for (int j=i*256*256; j < i*256*256 + 256*256; j++)
-				brain[j] = _byteswap_ushort(brain[j]);
-				//cout << brain[j] << ", ";
-		}
-		volume = new Texture3D(brain,256,256,109,1,GL_RED,GL_UNSIGNED_SHORT);
-		
-#define i(x,y,z) (z)*256*256 + (y)*256 + (x)
+	void show_bonsai(){
+		densities = bonsai_densities;
+		gradients = bonsai_gradients;
+		colors = bonsai_colors;
+		setWorldTransform(scale(mat4(1), vec3(1, 1, 1)));
+	}
 
-		for (int z=1; z < 108; z++)
-			for (int y=1; y < 255; y++)
-				for (int x=1; x < 255; x++){
-					vec3 n(
-						brain[i(x-1,y,z)] - brain[i(x+1,y,z)]
-						,brain[i(x,y-1,z)] - brain[i(x,y+1,z)]
-						,brain[i(x,y,z-1)] - brain[i(x,y,z+1)]
-					);
-
-					if (_isnan(n.x) || _isnan(n.y) || _isnan(n.z))
-						cout<<"tits"<<endl;
-
-					//norms[i(x,y,z)] = (n.x==0&&n.y==0&&n.z==0) ? vec3(0) : normalize(n);
-					
-					norms[i(x,y,z)] = n == vec3(0) ?  
-						normalize(vec3(x/255.f,y/255.f,z/108.f)-vec3(.5))
-						: normalize(n);
-
-					/*
-					vec3 a = norms[i(x,y,z)];
-					vec3 b = a*.5f + vec3(.5);
-					vec3 c = b*2.f - vec3(1);
-					if (abs(a.x - c.x) > .0000001){
-						cout <<"-----------------"<<endl;
-						cout <<a.x<<","<<a.y<<","<<a.z<<","<<endl;
-						//cout <<b.x<<","<<b.y<<","<<b.z<<","<<endl;
-						cout <<c.x<<","<<c.y<<","<<c.z<<","<<endl;
-					}
-					*/
-				}
-#undef i
-		
-		
-		
-		normals = new Texture3D(norms,256,256,109,GL_RGB32F,GL_RGB,GL_FLOAT);
-		delete brain;
-		delete norms;
-		setWorldTransform(rotate(mat4(1),180.f,vec3(1,0,0)) * scale(mat4(1),vec3(1,1,.5)));
+	void show_chest(){
+		densities = chest_densities;
+		gradients = chest_gradients;
+		colors = chest_colors;
+		setWorldTransform(scale(mat4(1), vec3(1, 1, 279.f/256)));
 	}
 
 	void setDelta(float delta){
 		shader.enable();
-		this->delta = std::max(delta,.001f);
+		this->delta = std::max(delta,.0005f);
 	}
 
 	void setAbsorbtion(float absorbtion){
@@ -199,7 +205,7 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 
 	void setThreshold(float threshold){
 		shader.enable();
-		this->threshold = std::max(threshold,.001f);
+		this->threshold = std::max(threshold,0.f);
 	}
 
 	void setBackground(int i){
@@ -234,14 +240,23 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 			setDelta(*delta + .01*Clock::delta);
 
 		if (keys[';'])
-			setAbsorbtion(*absorbtion - 5*Clock::delta);
+			setAbsorbtion(*absorbtion - 10*Clock::delta);
 		if (keys['\''])
-			setAbsorbtion(*absorbtion + 5*Clock::delta);
+			setAbsorbtion(*absorbtion + 10*Clock::delta);
 
 		if (keys['k'])
-			setThreshold(*threshold - .001*Clock::delta);
+			setThreshold(*threshold - .15*Clock::delta);
 		if (keys['l'])
-			setThreshold(*threshold + .001*Clock::delta);
+			setThreshold(*threshold + .15*Clock::delta);
+
+		if (keys['n'])
+			density_gradient_mix = glm::max(0.f, *density_gradient_mix - .5f*Clock::delta);
+		if (keys['m'])
+			density_gradient_mix = glm::min(1.f, *density_gradient_mix + .5f*Clock::delta);
+		if (keys['['])
+			brightness = std::max(.5f, *brightness - .25f*Clock::delta);
+		if (keys[']'])
+			brightness = std::min(4.f, *brightness + .25f*Clock::delta);
 
 		Clock::printFps(500);
 	}
@@ -266,7 +281,6 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 				* rotate(mat4(1), -mouseDelta.y*w*Clock::delta, right());
 			setWorldTransform(m * *worldTransform);
 		}
-
 	}
 
 	virtual void passiveMouseMove(int x, int y){
@@ -285,6 +299,12 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 			case '3':
 				setBackground(2);
 				break;
+			case '9':
+				show_bonsai();
+				break;
+			case '0':
+				show_chest();
+				break;
 		}
 	}
 
@@ -292,7 +312,7 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 		FPInput::keyUp(key, x, y);
 	}
 
-	~Volumez(){
+	~VolumeRenderer(){
 		cout << "exiting" << endl;
 	}
 
@@ -300,14 +320,14 @@ struct Volumez : public Viewport, public Scene, public FPInput {
 
 
 MyWindow win;
-Volumez volumez(0,0,1,1);
+VolumeRenderer vol(0,0,1,1);
 
 
 void init(void)
 {
 	win();
-	volumez();
-	win.add(&volumez);
+	vol();
+	win.add(&vol);
 }
 
 void init_glui(){}

@@ -47,6 +47,7 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 	Uniform1f noise;
 	Uniform1f rIndex;
 	Uniform1f alpha;
+	Uniform1f timeNoise;
 
 	CubeBackground background;
 	CubeMap* backgrounds[3];
@@ -76,6 +77,7 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 		noise("noise",&shader,.001);
 		rIndex("rIndex",&shader,1.2);
 		alpha("alpha",&shader,1);
+		timeNoise("timeNoise",&shader,0);
 		perlin("perlin",&shader,new ILTexture("MyTerrain/noise.png"));
 
 		light = new Light(vec3(1,1,1), 2048, perspective(35.f, 1.f, 160.f, 250.f), glm::lookAt(vec3(125,160,-80),vec3(0,0,0),vec3(0,1,0)));
@@ -154,13 +156,17 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 		if (keys['c'])
 			Scene::globals.lights[0].color = rainbowColors(.01);
 		if (keys['\''])
-			alpha = std::min(1.f, *alpha + 1.f*Clock::delta);
+			alpha = std::min(1.f, *alpha * (1+Clock::delta));// + 1.f*Clock::delta);
 		if (keys[';'])
-			alpha = std::max(0.1f, *alpha - 1.f*Clock::delta);
+			alpha = std::max(0.01f, *alpha / (1+Clock::delta));// - 1.f*Clock::delta);
 		if (keys['l'])
 			rIndex = std::min(2.f, *rIndex + .3f*Clock::delta);
 		if (keys['k'])
-			rIndex = *rIndex - .3*Clock::delta;
+			rIndex = *rIndex - .3f*Clock::delta;
+		if (keys['m'])
+			timeNoise = *timeNoise + .1f*Clock::delta;
+		if (keys['n'])
+			timeNoise = std::max(0.f, *timeNoise - .1f*Clock::delta);
 	}
 
 	void moveObjects(){
@@ -235,7 +241,7 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 			auto o = balls.objects[dragIndex];
 			vec3 move;
 			if (keys['r']){
-				move = forward * mouseDelta.y * .015f;
+				move = forward * mouseDelta.y * .03f;
 			} else {
 				//move perpendicular to screen
 				float z = -(matrix() * o->getWorldTransform() * vec4(0,0,0,1)).z;

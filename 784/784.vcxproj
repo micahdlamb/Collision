@@ -128,15 +128,16 @@
     <ClInclude Include="VAO.h" />
     <ClInclude Include="Viewer.h" />
     <ClInclude Include="Viewport.h" />
+    <ClInclude Include="Brain1.h" />
+    <ClInclude Include="Brain2.h" />
     <ClInclude Include="Volume.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="background.frag" />
     <None Include="blur.frag" />
     <None Include="blur.vert" />
-    <None Include="brain-orig.frag" />
-    <None Include="brain.frag" />
-    <None Include="brain.vert" />
+    <None Include="brain2.frag" />
+    <None Include="brain1.frag" />
     <None Include="chase.frag" />
     <None Include="chase.geom" />
     <None Include="chase.vert" />

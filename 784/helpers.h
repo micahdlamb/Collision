@@ -16,6 +16,7 @@
 #define RAD(x) ((x)*PI/180)
 #define DEG(x) ((x)*180/PI)
 typedef size_t U;
+typedef unsigned char uchar;
 
 using namespace std;
 using namespace glm;
