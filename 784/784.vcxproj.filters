@@ -25,7 +25,6 @@
     <ClInclude Include="Shapes.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="Cubez.h" />
     <ClInclude Include="RayTracer.h" />
     <ClInclude Include="Fireworks.h" />
     <ClInclude Include="Clock.h">
@@ -135,9 +134,16 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="Glass-Balls.h" />
-    <ClInclude Include="Brain1.h" />
-    <ClInclude Include="Brain2.h" />
     <ClInclude Include="Volume.h" />
+    <ClInclude Include="Brain1.h">
+      <Filter>unused</Filter>
+    </ClInclude>
+    <ClInclude Include="Brain2.h">
+      <Filter>unused</Filter>
+    </ClInclude>
+    <ClInclude Include="Cubez.h">
+      <Filter>unused</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -286,14 +292,14 @@
     <None Include="volume.vert">
       <Filter>shaders</Filter>
     </None>
-    <None Include="brain2.frag">
+    <None Include="volume.vert">
       <Filter>shaders</Filter>
     </None>
     <None Include="brain1.frag">
-      <Filter>shaders</Filter>
+      <Filter>unused</Filter>
     </None>
-    <None Include="volume.vert">
-      <Filter>shaders</Filter>
+    <None Include="brain2.frag">
+      <Filter>unused</Filter>
     </None>
   </ItemGroup>
 </Project>

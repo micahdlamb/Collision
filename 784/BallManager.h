@@ -40,6 +40,7 @@ struct Ball : public Kinematic, public Pickable {
 		return m;
 	}
 
+	//update bounding volume (vao->boundingVolume is the bv in local space)
 	void updateBV(){
 		vao->boundingVolume->transform(getWorldTransform(), boundingVolume);
 	}

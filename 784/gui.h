@@ -7,7 +7,7 @@ const int MAXITERATIONS = 8;
 const int MAXSLICES = 100;
 
 //live vars
-int pattern=0;
+int pattern=1;
 int background=0;
 
 char load_file[sizeof(GLUI_String)] = "";

@@ -47,11 +47,13 @@ struct Surface : public Viewport, public Scene, public FPInput {
 		shader.enable();
 		worldTransform("worldTransform",&shader);
 		normalTransform("normalTransform",&shader);
-		pattern("pattern",&shader);
+		pattern("pattern",&shader, 1);
 		Scene::globals.lights[0].color = vec3(0,1,0);
 		Scene::globals.lights[0].pos = vec3(0,0,25);
-		reflectionsOn("reflectionsOn",&shader,0);
+		reflectionsOn("reflectionsOn",&shader,1);
 		blur("blur",&shader,0);
+
+		Viewer::pos = vec3(0,0,1.5f);
 
 		#define STR(x) #x
 		#define CM(file) STR(cubemaps/clouds/##file)

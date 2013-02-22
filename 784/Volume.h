@@ -6,35 +6,28 @@ const char* title = "Micah Lamb's Volumez";
 
 class Volume {
 public:
-	U x, y, z;
-	float* vals;
-	vec3* gradients;
 	typedef detail::tvec3<uchar> ucvec3;
+	U x, y, z;
+	uchar* vals;
+	vec3* gradients;
 	ucvec3 colors[256];
 
 	Volume(string vol, U x, U y, U z):x(x),y(y),z(z){
-		auto buf = new uchar[x*y*z];
-		vals = new float[x*y*z];
+		vals = new uchar[x*y*z];
 		gradients = new vec3[x*y*z];//hopefully default constuctor initializes to vec3(0)
 
 		fstream in(vol, ios::in | ios::binary);
 		if (!in.is_open()) error(string("can't open file: ") + vol);
-		in.read((char*)buf, x*y*z*sizeof(uchar));
-		//convert to float
-		for (U i=0; i < x; i++)
-			for (U j=0; j < y; j++)
-				for (U k=0; k < z; k++){
-					U ii = index(i,j,k);
-					vals[ii] = buf[ii] / 256.f;
-				}
+		in.read((char*)vals, x*y*z*sizeof(uchar));
+
 		//calc gradients
 		for (U i=1; i < x-1; i++)
 			for (U j=1; j < y-1; j++)
 				for (U k=1; k < z-1; k++){
 					gradient(i,j,k) = vec3(
-						val(i+1,j,k) - val(i-1,j,k)
-						,val(i,j+1,k) - val(i,j-1,k)
-						,val(i,j,k+1) - val(i,j,k-1)
+						val(i+1,j,k)/255.f - val(i-1,j,k)/255.f
+						,val(i,j+1,k)/255.f - val(i,j-1,k)/255.f
+						,val(i,j,k+1)/255.f - val(i,j,k-1)/255.f
 					);
 				}
 	}
@@ -64,7 +57,7 @@ public:
 		return k*x*y + i*x + j;
 	}
 
-	float& val(U i, U j, U k){
+	uchar& val(U i, U j, U k){
 		return vals[index(i,j,k)];
 	}
 	
@@ -129,6 +122,9 @@ struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 		gradients("gradients",&shader,g);
 		colors("colors",&shader,c);
 
+		Viewer::pos = vec3(0,0,1.f);
+		show_chest();
+
 		#define STR(x) #x
 		#define CM(file) STR(cubemaps/clouds/##file)
 		char* clouds[] = {CM(px.png),CM(nx.png),CM(py.png),CM(ny.png),CM(pz.png),CM(nz.png)};
@@ -138,10 +134,9 @@ struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 		char* deadmeat[] = {CM(px.jpg),CM(nx.jpg),CM(py.jpg),CM(ny.jpg),CM(pz.jpg),CM(nz.jpg)};
 		backgrounds[1] = new CubeMap(deadmeat, IL_ORIGIN_UPPER_LEFT);
 
-		#define CM(file) STR(cubemaps/hills/##file)
-		char* hills[] = {CM(px.png),CM(nx.png),CM(py.png),CM(ny.png),CM(pz.png),CM(nz.png)};
-		backgrounds[2] = new CubeMap(hills, IL_ORIGIN_UPPER_LEFT);
-		#undef CM
+		#define CM(file) STR(cubemaps/misc/##file)
+		char* oil[] = {CM(oil.jpg),CM(oil.jpg),CM(oil.jpg),CM(oil.jpg),CM(oil.jpg),CM(oil.jpg)};
+		backgrounds[2] = new CubeMap(oil, IL_ORIGIN_LOWER_LEFT);
 
 		background(backgrounds[0]);
 	}
@@ -152,14 +147,13 @@ struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 	void load(Texture*& densities, Texture*& gradients, Texture*& colors){
 		Volume bonsai("volumes/bonsai.vol", 256, 256, 128);
 		bonsai.loadColors("volumes/bonsai.colors");
-		bonsai_densities = new Texture3D(bonsai.vals,bonsai.x,bonsai.y,bonsai.z,1,GL_RED,GL_FLOAT);
+		bonsai_densities = new Texture3D(bonsai.vals,bonsai.x,bonsai.y,bonsai.z,1,GL_RED,GL_UNSIGNED_BYTE);
 		bonsai_gradients = new Texture3D(bonsai.gradients,bonsai.x,bonsai.y,bonsai.z,GL_RGB32F,GL_RGB,GL_FLOAT);
 		bonsai_colors = new Texture1D(bonsai.colors, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
 
-
 		Volume chest("volumes/chest.vol", 256, 256, 279);
 		chest.loadColors("volumes/chest.colors");
-		densities = chest_densities = new Texture3D(chest.vals,chest.x,chest.y,chest.z,1,GL_RED,GL_FLOAT);
+		densities = chest_densities = new Texture3D(chest.vals,chest.x,chest.y,chest.z,1,GL_RED,GL_UNSIGNED_BYTE);
 		gradients = chest_gradients = new Texture3D(chest.gradients,chest.x,chest.y,chest.z,GL_RGB32F,GL_RGB,GL_FLOAT);
 		colors = chest_colors = new Texture1D(chest.colors, 256, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
 		setWorldTransform(scale(mat4(1), vec3(1, 1, 279.f/256)));
@@ -183,14 +177,23 @@ struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 		densities = bonsai_densities;
 		gradients = bonsai_gradients;
 		colors = bonsai_colors;
-		setWorldTransform(scale(mat4(1), vec3(1, 1, 1)));
+		threshold = .19f;
+		absorbtion = 60.f;
+		density_gradient_mix = .5f;
+		brightness = 2.f;
+		setWorldTransform(scale(rotate(mat4(1), 180.f, vec3(1,0,0)), vec3(1, 1, 1)));
 	}
 
 	void show_chest(){
 		densities = chest_densities;
 		gradients = chest_gradients;
 		colors = chest_colors;
-		setWorldTransform(scale(mat4(1), vec3(1, 1, 279.f/256)));
+		threshold = .015f;
+		absorbtion = 25.f;
+		density_gradient_mix = .1f;
+		brightness = 3.5f;
+		
+		setWorldTransform(scale(rotate(mat4(1), -90.f, vec3(1,0,0)), vec3(1, 1, 279.f/256)));
 	}
 
 	void setDelta(float delta){

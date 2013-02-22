@@ -6,8 +6,8 @@ int main_window;
 uvec2 dim(1600,900);
 #define NUM_BUFFERS GLUT_DOUBLE
 
-//#include "lab3.h"
-#include "Volume.h"
+#include "lab3.h"
+//#include "Volume.h"
 //#include "Tessellation.h"
 //#include "RayTracer.h"
 //#include "Glass-Balls.h"

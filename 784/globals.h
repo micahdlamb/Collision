@@ -14,8 +14,8 @@ enum SurfaceTypes {
 
 int curveType=0;
 int surfaceType=0;
-int iterations=0;
-int slices=3;
+int iterations=4;
+int slices=30;
 float extrude=.5f;
 
 bool curveClosed(){
