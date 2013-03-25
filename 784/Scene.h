@@ -42,6 +42,8 @@ struct Scene {
 	stack<mat4> projections, views;
 	stack<Frustum> viewFrustums;
 
+	vector<Light*> lights;
+
 	void operator()(Viewer* viewer){
 		this->viewer = viewer;
 		projections.push(mat4(1));
@@ -58,6 +60,13 @@ struct Scene {
 		globals.time = Clock::time;
 		globals.deltaTime = Clock::delta;
 		//globals.screenDim set in resize
+
+		for (U i=0; i < lights.size(); i++){
+			Scene::globals.lights[i].color = lights[i]->color;
+			Scene::globals.lights[i].pos = lights[i]->pos();
+			Scene::globals.lights[i].eye = lights[i]->eye();
+		}
+
 		globals.sync();//upload everything
 		viewFrustums.top() = Frustum(eye());
 	}
@@ -70,7 +79,6 @@ struct Scene {
 
 	virtual void draw()=0;
 
-
 	mat4 view(){
 		if (views.size())
 			return views.top();
@@ -79,9 +87,6 @@ struct Scene {
 	}
 
 	mat4 eye(){
-		auto x = projections.top();
-		auto y = view();
-		auto z = x * y;
 		return projections.top() * view();
 	}
 
@@ -136,6 +141,10 @@ struct Scene {
 		viewFrustums.pop();
 	}
 
+	void addLight(Light* light){
+		lights.push_back(light);
+	}
+
 	Frustum& viewFrustum(){
 		if (viewFrustums.size() == 0)
 			cout <<"tits";
@@ -143,6 +152,13 @@ struct Scene {
 	}
 };
 
+inline void pushEye(mat4& projection, mat4& view){
+	Scene::current->pushEye(projection, view);
+}
+
+inline void popEye(){
+	Scene::current->popEye();
+}
 
 /*
 struct GlobalUniforms : public UniformBlock {

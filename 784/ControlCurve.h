@@ -51,10 +51,6 @@ struct ControlCurve : public Viewport {
 		,curveColor(0, 0, 1)
 		,colorz(false)
 	{
-
-	}
-
-	void operator()(){
 		//should be updated every draw but I'll assume it isn't changed
 		glPointSize((GLfloat)ptSize);
 		glEnable(GL_POINT_SMOOTH);
@@ -96,9 +92,7 @@ struct ControlCurve : public Viewport {
 		origin.push_back(Pt(vec2(-.999, .999),vec3(0,0,0)));
 		origin.push_back(Pt(vec2(-.999, .999),vec3(0,0,0)));
 		origin.push_back(Pt(vec2(-.999, -.999),vec3(0,0,0)));
-
 	}
-
 
 	vector<vec2> getControlPtPositions(){
 		return getPositions(controlPts);

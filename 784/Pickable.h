@@ -1,5 +1,6 @@
 #pragma once
 
+//inherit from this to make the object selectable with mouse
 struct Pickable : Object {
 	Shader shader;
 	Uniform1i id;

@@ -40,9 +40,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker {
 		,nearPlane(.1f), farPlane(1000.f), fovY(60.f)
 		,wireframe(false)
 		,dragIndex(-1)
-	{}
-
-	void operator()(){
+	{
 		printGLErrors("init");
 		if (atoi((const char*)glGetString(GL_VERSION)) < 4)
 			error("OpenGL 4+ required for tessellation shaders");
@@ -127,6 +125,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker {
 
 		background(backgrounds[2]);
 		printGLErrors("/init");
+
 	}
 
 	void setBackground(int i){
@@ -135,13 +134,11 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker {
 
 	void drawShadows(){
 		auto ep = eyePos();
-		pushEye(light->projection, light->view);
-		globals.syncEye(eye(),ep);//hack to make sure scene tessellated same in shadow map as main view frustrum
 		light->bind();
+		globals.syncEye(eye(),ep);//hack to make sure scene tessellated same in shadow map as main view frustrum
 		terrain->shadowDraw();
 		balls.shadowDraw();
 		light->unbind();
-		popEye();
 	}
 
 	void drawReflection(){
@@ -348,13 +345,13 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker {
 };
 
 MyWindow win;
-Tessellation tessellation(0,0,1,1);
+Tessellation* tessellation;
 
 void init(void)
 {
-	tessellation();
 	win();
-	win.add(&tessellation);
+	tessellation = new Tessellation(0,0,1,1);
+	win.add(tessellation);
 	Clock::maxDelta = 1.f/55;
 }
 
@@ -372,7 +369,7 @@ void idle(){
 		#pragma omp master
 		glutPostRedisplay();
 		#pragma omp single
-		tessellation.moveObjects();
+		tessellation->moveObjects();
 	}
 }
 

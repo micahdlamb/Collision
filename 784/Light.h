@@ -1,5 +1,8 @@
 #pragma once
 
+void pushEye(mat4& projection, mat4& view);
+void popEye();
+
 struct Light {
 	vec3 color;
 
@@ -19,11 +22,7 @@ struct Light {
 		,view(view){
 			blurrer(&depth);
 			
-			fb();
-			fb.bind();
-			fb.attach(&depth);
-			fb.finalize();
-			fb.unbind();
+			fb(&depth);
 	}
 
 	mat4 eye(){
@@ -39,9 +38,11 @@ struct Light {
 		fb.bind();
 		glClearColor(1,1,1,1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		pushEye(projection, view);
 	}
 
 	void unbind(){
+		popEye();
 		fb.unbind();
 		Viewport::pop();
 		blurrer.blur();
@@ -49,7 +50,8 @@ struct Light {
 };
 
 
-//experimental (tries to dynamically update the lights eye to look at the view Frustum
+//experimental (tries to dynamically update the lights eye to look at the view Frustum... works but kind of buggy)
+/*
 struct DirLight {
 	vec3 dir;
 	vec3 color;
@@ -69,11 +71,7 @@ struct DirLight {
 		,dir(dir){
 			blurrer(&depth);
 			
-			fb();
-			fb.bind();
-			fb.attach(&depth);
-			fb.finalize();
-			fb.unbind();
+			fb(&depth);
 	}
 
 	mat4 eye(){
@@ -104,3 +102,4 @@ struct DirLight {
 		blurrer.blur();
 	}
 };
+*/

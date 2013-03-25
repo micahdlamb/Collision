@@ -12,25 +12,25 @@ GLenum GL_I = GL_UNSIGNED_INT;
 const char* title = "Micah Lamb's 784 lab 3";
 
 MyWindow win;
-ControlCurve cc1(0,0,.35,.5,vec3(1,.95,1)), cc2(0,.5,.35,.5,vec3(.9,1,.9));
-Surface surface(.35,0,.65,1,&cc1, &cc2);
+ControlCurve *cc1, *cc2;
+Surface *surface;
 
 #include "gui.h"
 
 void clear(){
-	cc1.clear();
-	cc2.clear();
-	surface.clear();
+	cc1->clear();
+	cc2->clear();
+	surface->clear();
 	glutPostRedisplay();
 }
 
 void computeSurface(){
-	surface.buildFromCurves();
+	surface->buildFromCurves();
 }
 
 void compute(){
-	cc1.compute();
-	cc2.compute();
+	cc1->compute();
+	cc2->compute();
 	computeSurface();
 	glutPostRedisplay();
 }
@@ -38,12 +38,12 @@ void compute(){
 void init(void)
 {
 	win();
-	cc1();
-	cc2();
-	surface();
-	win.add(&cc1);
-	win.add(&cc2);
-	win.add(&surface);
+	cc1 = new ControlCurve(0,0,.35,.5,vec3(1,.95,1));
+	cc2 = new ControlCurve(0,.5,.35,.5,vec3(.9,1,.9));
+	surface = new Surface(.35,0,.65,1,cc1, cc2);
+	win.add(cc1);
+	win.add(cc2);
+	win.add(surface);
 }
 
 void display()

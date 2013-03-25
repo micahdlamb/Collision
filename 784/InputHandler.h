@@ -33,7 +33,7 @@ struct InputHandler {
 	}
 };
 
-
+//basic first person movement through space
 struct FPInput : public InputHandler, public Viewer {
 	float moveSpeed;
 	float sensitivity;

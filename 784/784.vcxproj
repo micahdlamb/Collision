@@ -93,6 +93,7 @@
     <ClInclude Include="ControlCurve.h" />
     <ClInclude Include="CubeMap.h" />
     <ClInclude Include="Cubez.h" />
+    <ClInclude Include="Face.h" />
     <ClInclude Include="Fireworks.h" />
     <ClInclude Include="Framebuffer.h" />
     <ClInclude Include="Geometry.h" />
@@ -104,6 +105,7 @@
     <ClInclude Include="InputHandler.h" />
     <ClInclude Include="ITerrain.h" />
     <ClInclude Include="lab3.h" />
+    <ClInclude Include="lens.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="MyFireworks.h" />
     <ClInclude Include="MyWindow.h" />
@@ -147,11 +149,16 @@
     <None Include="cubeBackground.vert" />
     <None Include="cubez.frag" />
     <None Include="cubez.vert" />
+    <None Include="face-irradiance.frag" />
+    <None Include="face-irradiance.vert" />
+    <None Include="face.frag" />
+    <None Include="face.vert" />
     <None Include="fireworks.frag" />
     <None Include="fireworks.geom" />
     <None Include="fireworks.vert" />
     <None Include="fireworks_update.geom" />
     <None Include="fireworks_update.vert" />
+    <None Include="lens.frag" />
     <None Include="line.frag" />
     <None Include="line.vert" />
     <None Include="object.frag" />

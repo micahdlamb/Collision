@@ -5,11 +5,8 @@ struct Viewport {
 	GLint x,y,w,h;
 
 	Viewport(float xp, float yp, float wp, float hp){
-		operator()(xp,yp,wp,hp);
-	}
-
-	void operator()(float xp, float yp, float wp, float hp){
 		this->xp = xp; this->yp = yp; this->wp = wp; this->hp = hp;
+		x=0;y=0;w=1;h=1;//glut randomly calls display before resize sometimes
 	}
 
 	void enable(){
@@ -40,17 +37,17 @@ struct Viewport {
 	virtual void keyUp(unsigned char key, int x, int y)=0;
 
 	static void push(GLint x, GLint y, GLsizei width, GLsizei height){
-
+		printGLErrors("push");
 		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT | GL_SCISSOR_BIT | GL_POLYGON_BIT);
-
 		glViewport(x,y,width,height);
 		glScissor(x,y,width,height);
+		printGLErrors("/push");
 	}
 
 	static void pop(){
-		printGLErrors("pop start");
+		printGLErrors("pop");
 		glPopAttrib();
-		printGLErrors("pop end");
+		printGLErrors("/pop");
 	}
 };
 

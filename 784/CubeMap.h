@@ -1,6 +1,8 @@
 #pragma once
 
-struct CubeMap : public Texture/*, public Framebuffer*/ {
+struct CubeMap : public Texture {
+	
+	//Load the cubemap in as 6 seperate image files: x -x y -y z -z
 	CubeMap(char** images, ILenum origin=IL_ORIGIN_LOWER_LEFT):Texture(GL_TEXTURE_CUBE_MAP){
 
 		ilEnable(IL_ORIGIN_SET);
@@ -34,10 +36,6 @@ struct CubeMap : public Texture/*, public Framebuffer*/ {
 		}
 		delete [] buffer;
 
-		//dont think I need mipmaps
-		//glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		//glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
 		//use mipmaps so blurry reflections can be sampled from from them
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -49,7 +47,10 @@ struct CubeMap : public Texture/*, public Framebuffer*/ {
 		//Texture::unbind();
 	}
 
-
+	/************************************************************************************************************
+	The following functions can be used to generate a cubemap based on the actual scene
+	several changes made to this since I tested it last so there is probably a bug but the main idea works
+	************************************************************************************************************/
 	CubeMap(ILuint dim):Texture(GL_TEXTURE_CUBE_MAP){
 		printGLErrors("begin cubemap constructor");
 		width = height = dim;
@@ -65,19 +66,19 @@ struct CubeMap : public Texture/*, public Framebuffer*/ {
 
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 		glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-		//Texture::unbind();
+		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);//probably not needed
 	}
 
 	void update(vec3 pos, float nearPlane=.1f, float farPlane=1000.f){
-		printGLErrors("begin cubemap update");
+		printGLErrors("cubemap update");
 		Framebuffer::instance().bind();
 		Viewport::push(0,0,width,height);
 
-		//lookAts found with guess and check
+		//lookAts found with guess and check because I suck at finding shit online
 		//x
 		Scene::current->pushEye(perspective(90.0f, 1.0f, nearPlane, farPlane), lookAt(pos, pos+vec3(1,0,0), vec3(0,-1,0)));
 		Framebuffer::instance().attachCube(this, GL_TEXTURE_CUBE_MAP_POSITIVE_X);
@@ -119,7 +120,6 @@ struct CubeMap : public Texture/*, public Framebuffer*/ {
 		Framebuffer::instance().unbind();
 
 		generateMipmaps();
-		//Texture::unbind();
-		printGLErrors("end cubemap update");
+		printGLErrors("/cubemap update");
 	}
 };

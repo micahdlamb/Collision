@@ -344,4 +344,62 @@ struct Shapes {
 		return vao;
 	}
 
+	//wow obj stupid fucking format, fuck those assholes
+	static void loadObj4(const char* file, vector<vec3>& vertices, vector<vec2>& texCoords)
+	{
+		vector<vec3> verts;
+		vector<vec2> tcs;
+
+		//hacked some shit code for this one specific .obj file fuck you
+		FILE *fin;
+		fin = fopen(file,"r");
+		char line[200];
+		unsigned int v1,v2,v3,v4,t1,t2,t3,t4,n1,n2,n3,n4; 
+		while(fgets(line,200,fin)!=NULL)
+		{
+			if(line[0] == 'v' && line[1] == ' '){
+				vec3 v;
+				sscanf(line, "v %f %f %f",&v.x,&v.y,&v.z);
+				verts.push_back(v);
+				continue;
+			}
+			if(line[0] == 'v' && line[1] == 't'){
+				vec2 v; 
+				sscanf(line, "vt %f %f",&v.x,&v.y);
+				tcs.push_back(v);
+				continue;
+			}
+			if(line[0] == 'f'){
+				sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d",&v1,&t1,&n1,&v2,&t2,&n2,&v3,&t3,&n3,&v4,&t4,&n4);
+				vertices.push_back(verts[v1-1]);
+				vertices.push_back(verts[v2-1]);
+				vertices.push_back(verts[v3-1]);
+				vertices.push_back(verts[v4-1]);
+			 
+				texCoords.push_back(tcs[t1-1]);
+				texCoords.push_back(tcs[t2-1]);
+				texCoords.push_back(tcs[t3-1]);
+				texCoords.push_back(tcs[t4-1]);
+				continue;
+			}
+		}
+		fclose(fin);
+	}
+
+	static VAO* OBJ4(const char* file){
+		GLenum GL_I = GL_UNSIGNED_INT;
+		vector<vec3> vertices;
+		vector<vec2> texCoords;
+		loadObj4(file,vertices,texCoords);
+
+		auto vao = new VAO(GL_QUADS);
+		vao->bind(vertices.size());
+		vao->buffer(&vertices[0], vertices.size() * sizeof(vec3));
+		vao->in(3,GL_FLOAT);
+		vao->buffer(&texCoords[0], texCoords.size() * sizeof(vec2));
+		vao->in(2,GL_FLOAT);
+		vao->unbind();
+		//vao->boundingVolume = new BoundingSphere(&vertices[0], vertices.size());
+		return vao;
+	}
 };

@@ -6,7 +6,7 @@ struct Framebuffer {
 	GLuint gid;
 	vector<GLenum> buffers;
 	Framebuffer(){}
-
+	Framebuffer(bool init){if (init) operator()();}
 	void operator()(){
 		glGenFramebuffers(1, &gid);
 		attachDefaultDepthBuffer();
@@ -25,7 +25,7 @@ struct Framebuffer {
 	}
 
 	static Framebuffer& instance(){
-		static Framebuffer* f = new Framebuffer();
+		static Framebuffer* f = new Framebuffer(true);
 		return *f;
 	}
 
@@ -34,7 +34,7 @@ struct Framebuffer {
 		if (!depthBuffer){
 			glGenRenderbuffers(1, &depthBuffer);
 			glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, MAXVPSIZE,MAXVPSIZE);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, MAXVPSIZE, MAXVPSIZE);
 		}
 
 		//bind depth buffer
@@ -103,7 +103,14 @@ struct Framebuffer {
 		glReadBuffer(GL_NONE);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	}
-
 };
 
+inline void bind2FB(Texture* tex){
+	Framebuffer::instance().bind();
+	Framebuffer::instance().attach(tex);
+}
 
+
+inline void unbind2FB(){
+	Framebuffer::instance().unbind();
+}

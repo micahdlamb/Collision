@@ -26,11 +26,9 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="RayTracer.h" />
-    <ClInclude Include="Fireworks.h" />
     <ClInclude Include="Clock.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="Picking.h" />
     <ClInclude Include="Tessellation.h" />
     <ClInclude Include="Object.h">
       <Filter>common</Filter>
@@ -142,6 +140,14 @@
       <Filter>unused</Filter>
     </ClInclude>
     <ClInclude Include="Cubez.h">
+      <Filter>unused</Filter>
+    </ClInclude>
+    <ClInclude Include="lens.h" />
+    <ClInclude Include="Face.h" />
+    <ClInclude Include="Fireworks.h">
+      <Filter>unused</Filter>
+    </ClInclude>
+    <ClInclude Include="Picking.h">
       <Filter>unused</Filter>
     </ClInclude>
   </ItemGroup>
@@ -300,6 +306,21 @@
     </None>
     <None Include="brain2.frag">
       <Filter>unused</Filter>
+    </None>
+    <None Include="lens.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="face.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="face.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="face-irradiance.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="face-irradiance.vert">
+      <Filter>shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

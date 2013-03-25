@@ -6,12 +6,14 @@ int main_window;
 uvec2 dim(1600,900);
 #define NUM_BUFFERS GLUT_DOUBLE
 
-#include "lab3.h"
+//#include "lab3.h"
 //#include "Volume.h"
 //#include "Tessellation.h"
 //#include "RayTracer.h"
 //#include "Glass-Balls.h"
 //#include "Bullet.h"
+//#include "Lens.h"
+#include "Face.h"
 
 //outdated
 //#include "cubez.h"
@@ -74,8 +76,7 @@ int main (int argc, char* argv[])
 		glutMainLoop();
 	} catch (string e){
 		cout << e << endl;
-		string pause;
-		cin >> pause;
+		pause();
 	}
 
 	return 0;

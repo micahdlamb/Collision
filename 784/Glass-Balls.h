@@ -63,9 +63,7 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 		,FPInput(10)
 		,nearPlane(.1f), farPlane(1000.f), fovY(60.f)
 		,dragIndex(-1)
-	{}
-
-	void operator()(){
+	{
 		printGLErrors("init");
 
 		Scene::operator()(this);
@@ -112,10 +110,8 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 		backgrounds[2] = new CubeMap(hills, IL_ORIGIN_UPPER_LEFT);
 		#undef CM
 
-		shader.enable();
 		reflections("reflections",&shader,backgrounds[0]);
 		background(backgrounds[0]);
-
 		printGLErrors("/init");
 	}
 
@@ -296,13 +292,13 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 };
 
 MyWindow win;
-Ballz ballz(0,0,1,1);
+Ballz* ballz;
 
 void init(void)
 {
 	win();
-	ballz();
-	win.add(&ballz);
+	ballz = new Ballz(0,0,1,1);
+	win.add(ballz);
 }
 
 void init_glui(){}
@@ -319,7 +315,7 @@ void idle(){
 		#pragma omp master
 		glutPostRedisplay();
 		#pragma omp single
-		ballz.moveObjects();
+		ballz->moveObjects();
 	}
 }
 

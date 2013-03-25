@@ -22,7 +22,7 @@ struct Uniform {
 
 struct Uniform1i : public Uniform {
 	GLint value;
-	Uniform1i():value(INT_MAX){}
+
 	void push(){
 		if (location != -1){
 			glUniform1iv(location, 1, &value);
@@ -34,8 +34,10 @@ struct Uniform1i : public Uniform {
 	void operator()(const char* name, Shader* shader){
 		Uniform::operator()(name, shader);
 	}
+
 	void operator()(const char* name, Shader* shader, GLint v){
 		Uniform::operator()(name, shader);
+		shader->enable();
 		*this = v;
 	}
 
@@ -58,11 +60,14 @@ struct Uniform1f : public Uniform {
 	}
 
 	GLfloat& operator *(){ return value; }
+
 	void operator()(const char* name, Shader* shader){
 		Uniform::operator()(name, shader);
 	}
+
 	void operator()(const char* name, Shader* shader, GLfloat v){
 		Uniform::operator()(name, shader);
+		shader->enable();
 		*this = v;
 	}
 
@@ -82,11 +87,14 @@ struct Uniform2f : public Uniform {
 	}
 
 	vec2& operator *(){ return value; }
+
 	void operator()(const char* name, Shader* shader){
 		Uniform::operator()(name, shader);
 	}
+
 	void operator()(const char* name, Shader* shader, vec2 v){
 		Uniform::operator()(name, shader);
+		shader->enable();
 		*this = v;
 	}
 
@@ -106,11 +114,14 @@ struct Uniform3f : public Uniform {
 	}
 	
 	vec3& operator *(){ return value; }
+
 	void operator()(const char* name, Shader* shader){
 		Uniform::operator()(name, shader);
 	}
+
 	void operator()(const char* name, Shader* shader, vec3 v){
 		Uniform::operator()(name, shader);
+		shader->enable();
 		*this = v;
 	}
 
@@ -130,11 +141,14 @@ struct Uniform4f : public Uniform {
 	}
 	
 	vec4& operator *(){ return value; }
+
 	void operator()(const char* name, Shader* shader){
 		Uniform::operator()(name, shader);
 	}
+
 	void operator()(const char* name, Shader* shader, vec4 v){
 		Uniform::operator()(name, shader);
+		shader->enable();
 		*this = v;
 	}
 
@@ -159,6 +173,7 @@ struct UniformMat4 : public Uniform {
 	//matrices don't default to identity in shader
 	void operator()(const char* name, Shader* shader, mat4 v=mat4(1)){
 		Uniform::operator()(name, shader);
+		shader->enable();
 		*this = v;
 	}
 
@@ -179,6 +194,7 @@ struct UniformMat3 : public Uniform {
 
 	void operator()(const char* name, Shader* shader, mat3 v=mat3(1)){
 		Uniform::operator()(name, shader);
+		shader->enable();
 		*this = v;
 	}
 
@@ -199,8 +215,7 @@ struct UniformSampler : public Uniform {
 	void set(Texture* value, GLuint textureUnit){
 		this->value = value;
 		this->textureUnit = textureUnit+1;//0 reserved for other texture operations
-		if (value)
-			push();
+		push();
 	}
 
 	void push(){
@@ -216,17 +231,20 @@ struct UniformSampler : public Uniform {
 
 	void pushTexture(){
 		printGLErrors("UniformSampler pushTexture");
-		Texture::activateUnit(textureUnit);
-		glBindTexture(value->target, value->gid);
+		value->bind(textureUnit);
+		//Texture::activateUnit(textureUnit);
+		//glBindTexture(value->target, value->gid);
 		printGLErrors("/UniformSampler pushTexture");
 	}
 
+	//the max number of unique textures is currently limited by the number of texture units
 	void operator()(const char* name, Shader* shader, Texture* value, bool shareUnit=true){
+		assert(value && "UniformSampler logic currently requires it to be initialized with a Texture");
 		Uniform::operator()(name,shader);
 		static GLuint counter = 0;
 		static map<Texture*,GLuint> units;
 		GLuint u;
-		if (shareUnit && value){
+		if (shareUnit){
 			auto i = units.find(value);
 			if (i == units.end()){
 				u = counter++;
@@ -235,6 +253,7 @@ struct UniformSampler : public Uniform {
 				u = i->second;
 		} else
 			u = counter++;
+		shader->enable();
 		set(value, u);
 	}
 
@@ -245,12 +264,16 @@ struct UniformSampler : public Uniform {
 	}
 };
 
+//Uniform blocks allow you to pass in a structure to a shader.  You can also share them across multiple shaders using the addShader function 
 struct UniformBlock {
 	GLuint bid, binding, size;
 	
-	void operator()(GLuint size, GLuint binding){
+	//all UniformBlocks in a single shader must have a unique bindings.
+	//If you're sure your total number of UniformBlocks will stay under the max number of binding points (around 50 I think) then u can ignore the binding parameter.
+	//Otherwise you must manually select binding and remember to call enable before any draw call
+	void operator()(GLuint size, GLuint binding=-1){
 		printGLErrors("UniformBlock");
-		static GLuint counter = 1;//anything below this is reserved
+		static GLuint counter = 2;//0 reserved for Global, 1 used for Object::shared
 		this->binding = binding==-1 ? counter++ : binding;
 		this->size = size;
 		glGenBuffers(1, &bid);
@@ -261,11 +284,13 @@ struct UniformBlock {
 		printGLErrors("/UniformBlock");
 	}
 
+	//must enable before a draw if multiple distinct UniformBlocks using same binding point (like Object's shared).
+	//This complication is required because their are only a finite number of binding points
 	void enable(){
 		glBindBufferBase(GL_UNIFORM_BUFFER, this->binding, bid);
 	}
 
-	//connect shader to the global uniforms buffer, unneccessary if binding already specified in shader
+	//connect shader to this uniform block, unneccessary if binding already specified in shader
 	void addShader(Shader* shader, const char* name){
 		GLuint index = glGetUniformBlockIndex(shader->gid, name);
 		glUniformBlockBinding(shader->gid, index, binding);
@@ -277,6 +302,7 @@ struct UniformBlock {
 		glBufferSubData(GL_UNIFORM_BUFFER, start, size, value);
 	}
 };
+
 
 template <class T>
 struct GlobalUniform : UniformBlock {

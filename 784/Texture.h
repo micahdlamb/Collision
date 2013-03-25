@@ -1,5 +1,11 @@
 #pragma once
 
+//hack to get around dependency loop
+void draw(Texture* tex, float x, float y, float w, float h);
+void bind2FB(Texture* tex);
+void unbind2FB();
+
+
 struct Texture {
 	int width, height;
 	GLuint gid;
@@ -42,6 +48,7 @@ struct Texture {
 			glTexParameteri (target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	}
 
+	//bind to unit 0 (0 is reserved for all operations
 	void bind(){
 		static GLuint bound0 = 0;
 		if (bound0 != gid){
@@ -49,6 +56,19 @@ struct Texture {
 			glBindTexture(target, gid);
 			bound0 = gid;
 		}
+	}
+
+	void bind(GLuint unit){
+		activateUnit(unit);
+		glBindTexture(target, gid);
+	}
+
+	void bind2FB(){
+		::bind2FB(this);
+	}
+
+	void unbind2FB(){
+		::unbind2FB();
 	}
 
 	//void unbind(){//does nothing
@@ -67,6 +87,10 @@ struct Texture {
 			glActiveTexture(GL_TEXTURE0 + unit);
 			active = unit;
 		}
+	}
+
+	void draw(float x, float y, float w, float h){
+		::draw(this, x, y, w, h);
 	}
 
 	void save(const char* file){
@@ -109,7 +133,7 @@ struct ILTexture : public Texture {
 		ilLoadImage(file);
 		printDevILErrors();
 		int imageWidth = ilGetInteger( IL_IMAGE_WIDTH )
-			,imageHeight = ilGetInteger( IL_IMAGE_HEIGHT);
+			,imageHeight = ilGetInteger( IL_IMAGE_HEIGHT );
 
 		width = ceilPow2(imageWidth);
 		height = ceilPow2(imageHeight);

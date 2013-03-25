@@ -21,9 +21,7 @@ struct RayTracer : public Viewport, public Scene, public FPInput {
 		,FPInput(4)
 		,nearPlane(.1f), farPlane(1001.f), fov(60.f)
 		,transform(1)
-	{}
-
-	void operator()(){
+	{
 		Scene::operator()(this);
 		shader("rayTracer.vert", "rayTracer.frag");
 		shader.enable();
@@ -51,6 +49,7 @@ struct RayTracer : public Viewport, public Scene, public FPInput {
 
 		reflections("reflections",&shader,backgrounds[0]);
 		background(backgrounds[0]);
+
 	}
 
 	void setBackground(int i){
@@ -140,13 +139,13 @@ struct RayTracer : public Viewport, public Scene, public FPInput {
 
 
 MyWindow win;
-RayTracer rt(0,0,1,1);
+RayTracer* rt;
 
 void init(void)
 {
 	win();
-	rt();
-	win.add(&rt);
+	rt = new RayTracer(0,0,1,1);
+	win.add(rt);
 }
 
 void init_glui(){}

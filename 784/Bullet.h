@@ -94,9 +94,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 		,nearPlane(.1f), farPlane(1000.f), fovY(60.f)
 		,wireframe(false)
 		,dragIndex(-1)
-	{}
-
-	void operator()(){
+	{
 		printGLErrors("init");
 		if (atoi((const char*)glGetString(GL_VERSION)) < 4)
 			error("OpenGL 4+ required for tessellation shaders");
@@ -236,14 +234,12 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 
 	void drawShadows(){
 		auto ep = eyePos();
-		pushEye(light->projection, light->view);
-		globals.syncEye(eye(),ep);//hack to make sure scene tessellated same in shadow map as main view frustrum
 		light->bind();
+		globals.syncEye(eye(),ep);//hack to make sure scene tessellated same in shadow map as main view frustrum
 		terrain->shadowDraw();
 		for (auto i=objects.begin(); i!=objects.end(); i++)
 			(*i)->shadowDraw();
 		light->unbind();
-		popEye();
 	}
 
 	void drawReflection(){
@@ -438,14 +434,13 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 };
 
 MyWindow win;
-Tessellation tessellation(0,0,1,1);
+Tessellation* tessellation;
 
 void init(void)
 {
-	tessellation();
 	win();
-	win.add(&tessellation);
-
+	tessellation = new Tessellation(0,0,1,1);
+	win.add(tessellation);
 }
 
 void init_glui(){}

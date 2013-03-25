@@ -25,6 +25,10 @@ void main(void)
 {
 	mat4 m = mat4(1);
 	m[3] = vec4(0,0,-.5,1);
+	m[0][0] = 100;
+	m[1][1] = 100;
+	m[2][2] = 100;
+
 	m =  inverse(viewTransform) * m;
 
 	worldPos = vec3(m * vec4(pos,1));

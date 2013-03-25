@@ -39,9 +39,6 @@ struct Surface : public Viewport, public Scene, public FPInput {
 		,terrainFile(-1)
 		,mode(NOTHING)
 	{
-	}
-
-	void operator()(){
 		Scene::operator()(this);
 		shader("surface.vert", "surface.frag");
 		shader.enable();

@@ -37,6 +37,11 @@ void msg(T p, U m){
 	cout << p << ":" << m << endl;
 }
 
+inline void pause(){
+	string s;
+	cin >> s;
+}
+
 inline void error(string e){
 	throw e;
 }
@@ -294,7 +299,6 @@ void loadOFF(const char* file, vector<vec3>& vertices, vector<I>& indices){
 	if (fin.fail())
 		error(string("unable to open off file: ") + file);
 
-	stringstream ss;
 	string line;
 	int numVertices, numFaces;
 	getline(fin, line);
@@ -302,16 +306,14 @@ void loadOFF(const char* file, vector<vec3>& vertices, vector<I>& indices){
 	getline(fin, line);
 	//cout << line << endl;
 
-	ss << line;
+	stringstream ss(line);
 	ss >> numVertices;
 	ss >> numFaces;
 	cout << "vertices="<<numVertices << " faces="<< numFaces << endl;
 
 	for (int i=0; i < numVertices; i++){
-		ss.str("");
-		ss.clear();
 		getline(fin, line);
-		ss << line;
+		stringstream ss(line);
 		vec3 v;
 		ss >> v.x;
 		ss >> v.y;
@@ -322,11 +324,8 @@ void loadOFF(const char* file, vector<vec3>& vertices, vector<I>& indices){
 
 	int faceSize=-1;
 	for (int i=0; i < numFaces; i++){
-		ss.str("");
-		ss.clear();
 		getline(fin, line);
-		ss << line;
-
+		stringstream ss(line);
 		/*use this to allow faces other than triangle, will fail for files with multiple face sizes
 		int tmp;
 		ss >> tmp;
@@ -356,3 +355,44 @@ void loadOFF(const char* file, vector<vec3>& vertices, vector<I>& indices){
 		}
 	}
 }
+
+/*
+template <class I>
+void loadObj(const char* file, vector<vec3>& vertices, vector<vec2>& textCoords){
+	cout << "loading: " << file << endl;
+	ifstream fin(file);
+	if (fin.fail())
+		error(string("unable to open off file: ") + file);
+
+	vector<vec3> verts;
+	vector<vec2> tcs;
+
+	string line;
+	while(getline(fin, line){
+		stringstream ss(line);
+		string type;
+		ss >> type;
+		if (type == "v"){
+			vec3 v;
+			ss >> v.x;
+			ss >> v.y;
+			ss >> v.z;
+			verts.push_back(v);
+		} else if (type == "vt"){
+			vec2 v;
+			ss >> v.x;
+			ss >> v.y;
+			tcs.push_back(v);
+		} else if (type == "f"){
+			string s;
+			vector
+			while (getline(ss, s)){
+
+
+			}
+
+
+		}
+	}
+}
+*/

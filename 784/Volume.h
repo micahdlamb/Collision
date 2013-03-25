@@ -71,7 +71,7 @@ public:
 	}
 };
 
-struct VolumeRenderer : public Viewport, public Scene, public FPInput {
+struct VolumeScene : public Viewport, public Scene, public FPInput {
 	Shader shader;
 	UniformMat4 worldTransform;
 	UniformMat4 inverseTransform;
@@ -91,12 +91,10 @@ struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 
 	float nearPlane, farPlane, fovY;
 
-	VolumeRenderer(float x, float y, float w, float h):
+	VolumeScene(float x, float y, float w, float h):
 		Viewport(x,y,w,h)
 		,nearPlane(.1f), farPlane(1001.f), fovY(60.f)
-	{}
-
-	void operator()(){
+	{
 		Scene::operator()(this);
 		//shader("volume.vert", "volume.frag");
 		shader("volume.vert", "volume.frag");
@@ -139,6 +137,7 @@ struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 		backgrounds[2] = new CubeMap(oil, IL_ORIGIN_LOWER_LEFT);
 
 		background(backgrounds[0]);
+
 	}
 
 	Texture *bonsai_densities, *bonsai_gradients, *bonsai_colors;
@@ -315,7 +314,7 @@ struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 		FPInput::keyUp(key, x, y);
 	}
 
-	~VolumeRenderer(){
+	~VolumeScene(){
 		cout << "exiting" << endl;
 	}
 
@@ -323,14 +322,14 @@ struct VolumeRenderer : public Viewport, public Scene, public FPInput {
 
 
 MyWindow win;
-VolumeRenderer vol(0,0,1,1);
+VolumeScene* vol;
 
 
 void init(void)
 {
 	win();
-	vol();
-	win.add(&vol);
+	vol = new VolumeScene(0,0,1,1);
+	win.add(vol);
 }
 
 void init_glui(){}

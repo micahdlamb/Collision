@@ -33,6 +33,7 @@ struct Uniform;
 struct ShapeBuilder;
 struct BoundingSphere;
 struct BoundingAABB;
+struct Texture;
 
 #include "Clock.h"
 #include "Geometry.h"
@@ -44,8 +45,10 @@ struct BoundingAABB;
 #include "Framebuffer.h"
 #include "Uniform.h"
 #include "Viewer.h"
-#include "Scene.h"
 #include "Viewport.h"
+#include "Blurrer.h"
+#include "Light.h"
+#include "Scene.h"
 #include "CubeMap.h"
 #include "InputHandler.h"
 #include "Background.h"
@@ -54,8 +57,6 @@ struct BoundingAABB;
 #include "ITerrain.h"
 #include "TerrainWalker.h"
 #include "MyTerrain.h"
-#include "Blurrer.h"
-#include "Light.h"
 #include "TexturedSquare.h"
 #include "Pickable.h"
 #include "Chase.h"

@@ -67,11 +67,11 @@ void onChange(int id){
 			break;
 		case SPATTERN:
 			cout <<"pattern change to " << pattern << endl;
-			surface.setPattern(pattern);
+			surface->setPattern(pattern);
 			break;
 		case SBACKGROUND:
 			cout <<"background changed to " << background << endl;
-			surface.setBackground(background);
+			surface->setBackground(background);
 			break;
 	}
 
@@ -91,38 +91,38 @@ void onButton(int id){
 		case SAVE:{
 			string s = save_file;
 			if (s.size())
-				surface.print(s.c_str());
+				surface->print(s.c_str());
 			break;
 		}
 		case CUBE:
-			surface.cube();
+			surface->cube();
 			break;
 		case PYRAMID:
-			surface.pyramid();
+			surface->pyramid();
 			break;
 		case TERRAIN:
-			surface.terrain();
+			surface->terrain();
 			break;
 		case LOAD_FILE:{
 			string s = load_file;
 			if (s.size() > 0)
-				surface.load(s.c_str());
+				surface->load(s.c_str());
 			break;
 		}
 		case BEZIER_SURFACE:
-			surface.surface(0);
+			surface->surface(0);
 			break;
 		case CUBIC_B_SPLINE_SURFACE:
-			surface.surface(1);
+			surface->surface(1);
 			break;
 		case CATMULL_CLARK:
-			surface.smooth(0);
+			surface->smooth(0);
 			break;
 		case DOO_SABIN:
-			surface.smooth(1);
+			surface->smooth(1);
 			break;
 		case LOOP:
-			surface.smooth(2);
+			surface->smooth(2);
 			break;
 	}
 	glutPostRedisplay();
