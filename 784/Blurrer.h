@@ -11,7 +11,7 @@ struct DepthBlurrer : public Shader {
 	void operator()(Texture* tex){
 		Shader::operator()("blur.vert","blur.frag");
 		primary = tex;
-		tmp(NULL,primary->width,primary->height, primary->internalFormat);
+		tmp(primary->width,primary->height, primary->internalFormat);
 		coordScale("coordScale",this);
 		texture("tex", this, primary);
 		fb1(primary);

@@ -3,7 +3,7 @@
 struct Object : public Shader {
 	struct Shared {
 		mat4 worldTransform;
-		mat4 normalTransform;//mat3 as mat4 for std140
+		mat4 normalTransform;//use mat3 in the shader
 		mat4 inverseTransform;
 	};
 	

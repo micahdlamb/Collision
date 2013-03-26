@@ -47,7 +47,7 @@ struct MyTerrain : public Object, public ITerrain {
 
 		msg("loading terrain map",file);
 		heights(file);
-		heightMap("heightMap",this,new Texture(heights.value_ptr(),heights.cols,heights.rows,GL_R32F,GL_RED,GL_FLOAT,GL_CLAMP_TO_EDGE));
+		heightMap("heightMap",this,new Texture(heights.value_ptr(),heights.cols,heights.rows,GL_R32F,GL_RED,GL_FLOAT,false,GL_CLAMP_TO_EDGE));
 	
 		int patchesX = heights.cols / patchSize
 			,patchesY = heights.rows / patchSize;
@@ -96,7 +96,7 @@ struct MyTerrain : public Object, public ITerrain {
 			msg("saving normals to",normalsFile);
 			normals.write(normalsFile.c_str());
 		}
-		normalMap("normalMap",this, new Texture(normals.value_ptr(),normals.cols,normals.rows,GL_RGB32F,GL_RGB,GL_FLOAT,GL_CLAMP_TO_EDGE));
+		normalMap("normalMap",this, new Texture(normals.value_ptr(),normals.cols,normals.rows,GL_RGB32F,GL_RGB,GL_FLOAT,false,GL_CLAMP_TO_EDGE));
 
 		auto vao = new VAO(GL_PATCHES);
 		vao->bind(indices.size());

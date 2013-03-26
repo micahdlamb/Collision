@@ -19,7 +19,7 @@ layout(std140) uniform Global {
 
 layout(std140) uniform Object {
 	mat4 worldTransform;
-	mat4 normalTransform;
+	mat3 normalTransform;
 };
 
 uniform sampler2D normals;
@@ -47,11 +47,11 @@ void main(void)
 
 	//hardcoded for now
 	float amb = .2;
-	float dif = texture(diffuse, uv * screenDim / vec2(2048)).r;
+	float dif = texture(diffuse, uv).r;
 	float spec = .4;
 	float shininess = 30;
 	vec3 norm = texture(normals, uv).rgb*2-vec3(1);
-	norm = normalize(vec3(normalTransform * vec4(norm,0)));//should change normalTransform to be mat3 but I'd have to change it all over :(
+	norm = normalize(normalTransform * norm);
 	if (!gl_FrontFacing) norm *= -1;
 
 	//Color the surface

@@ -18,7 +18,7 @@ layout(std140) uniform Global {
 
 layout(std140) uniform Object {
 	mat4 worldTransform;
-	mat4 normalTransform;
+	mat3 normalTransform;
 };
 
 out vec3 localPos;

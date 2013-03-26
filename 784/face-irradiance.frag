@@ -19,7 +19,7 @@ layout(std140) uniform Global {
 
 layout(std140) uniform Object {
 	mat4 worldTransform;
-	mat4 normalTransform;
+	mat3 normalTransform;
 };
 
 float chebyshevUpperBound(float distance, vec2 moments)
@@ -56,7 +56,7 @@ void main(void)
 	
 	//hardcoded for now
 	vec3 norm = texture(normals, uv).rgb*2-vec3(1);
-	norm = normalize(vec3(normalTransform * vec4(norm,0)));//should change normalTransform to be mat3 but I'd have to change it all over :(
+	norm = normalize(normalTransform * norm);
 	if (!gl_FrontFacing) norm *= -1;
 
 	vec3 lightPos = lights[0].pos;

@@ -33,9 +33,9 @@ void printDevILErrors();
 void printGLErrors(const char* m);
 
 template <class T, class U>
-void msg(T p, U m){
-	cout << p << ":" << m << endl;
-}
+void msg(T p, U m){cout << p << ":" << m << endl;}
+template <class T, class U>
+void msg(T m){cout << m << endl;}
 
 inline void pause(){
 	string s;

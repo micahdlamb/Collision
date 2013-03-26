@@ -17,7 +17,7 @@ struct Light {
 
 	Light(vec3 color, GLuint dim, mat4 projection, mat4 view):
 		color(color)
-		,depth(NULL,dim,dim,GL_RGB32F)
+		,depth(dim,dim,GL_RGB32F)
 		,projection(projection)
 		,view(view){
 			blurrer(&depth);

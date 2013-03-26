@@ -14,7 +14,7 @@ struct Blurrer : public Shader {
 	void operator()(Texture* tex){
 		Shader::operator()("blur.vert","blur.frag");
 		primary = tex;
-		tmp(NULL,primary->width,primary->height, primary->internalFormat);
+		tmp(primary->width,primary->height, primary->internalFormat);
 		coordScale("coordScale",this);
 		texture("tex", this, primary);
 		fb1(primary);
@@ -66,8 +66,7 @@ struct Face : Object {
 		Object::addShader(&irradianceShader);//share worldTransform with normalTransform with irradianceShader
 		irradianceNormals("normals",&irradianceShader,normalsTex);
 
-		irradianceTexture(NULL,2048,2048,GL_RED);
-		//irradianceFB(&irradianceTexture);
+		irradianceTexture(1024,1024,GL_RED,true);
 		blurrer(&irradianceTexture);
 		diffuse("diffuse",this,&irradianceTexture);
 		enableShadowCast();
@@ -76,18 +75,18 @@ struct Face : Object {
 
 	void render(){
 		//draw irradiance
-		irradianceTexture.bind2FB();
+		irradianceTexture.bind2FB(true);
 		glClearColor(0,0,0,0);
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		irradianceShader.enable();
 		vao->draw();
 		irradianceTexture.unbind2FB();
-		
-		irradianceTexture.draw(0,0,300,300);
-		
+
+		irradianceTexture.draw(0,0,300,300);//doesn't work with mip maps added
 		for (int i=0; i < blur; i++)
 			blurrer.blur();
 
+		irradianceTexture.generateMipmaps();
 		irradianceTexture.draw(300,0,300,300);
 		shadowMap.value->draw(600,0,300,300);
 		//convert 

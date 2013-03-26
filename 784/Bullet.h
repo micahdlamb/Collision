@@ -118,7 +118,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 		backgrounds[2] = new CubeMap(hills, IL_ORIGIN_UPPER_LEFT);
 		#undef CM
 
-		reflection = new Texture(NULL,2048,2048,GL_RGB);
+		reflection = new Texture(2048,2048,GL_RGB);
 		reflectionFb(reflection);
 		tex(&light->depth);
 
@@ -132,7 +132,7 @@ struct Tessellation : public Viewport, public Scene, public TerrainWalker, publi
 
 		TerrainWalker::operator()(terrain,10,.1,2,15,25);
 
-		pickFb(new Texture(NULL,2048,2048,GL_RGB32UI,GL_RGB_INTEGER,GL_UNSIGNED_INT));
+		pickFb(new Texture(2048,2048,GL_RGB32UI));
 
 		///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
 		btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();

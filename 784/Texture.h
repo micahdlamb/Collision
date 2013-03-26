@@ -10,6 +10,7 @@ struct Texture {
 	int width, height;
 	GLuint gid;
 	GLenum target;
+	bool mipmaps;
 
 	//used to make copies
 	GLenum internalFormat;
@@ -18,23 +19,46 @@ struct Texture {
 		glGenTextures(1, &gid);
 	}
 
-	Texture(void* data, int width, int height, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, GLenum wrap = GL_REPEAT, bool mipmaps=false):target(GL_TEXTURE_2D){
+	//use this if not passing in any data
+	Texture(int width, int height, GLenum internalFormat=GL_RGBA, bool mipmaps=false, GLenum wrap = GL_REPEAT):target(GL_TEXTURE_2D){
 		glGenTextures(1, &gid);
-		operator()(data, width, height, internalFormat, format, type, wrap, mipmaps);
+		operator()(width, height, internalFormat, mipmaps, wrap);
 	}
 
-	void operator()(void* data, int width, int height, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, GLenum wrap = GL_REPEAT, bool mipmaps=false){
+	//use this if not passing in any data
+	void operator()(int width, int height, GLenum internalFormat=GL_RGBA, bool mipmaps=false, GLenum wrap = GL_REPEAT){
+		//eliminate stupid driver bugs, will update as needed
+		//even though these aren't used for anything, they still have to be compatible with internal format on nvidea
+		GLenum format = GL_RGBA, type=GL_UNSIGNED_BYTE;
+		switch(internalFormat){
+			case GL_RGB32UI:
+				format = GL_RGB_INTEGER;
+				type = GL_UNSIGNED_INT;
+				break;
+		}
+
+		operator()(NULL, width, height, internalFormat, format, type, mipmaps, wrap);
+	}
+
+	Texture(void* data, int width, int height, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, bool mipmaps=false, GLenum wrap = GL_REPEAT):target(GL_TEXTURE_2D){
+		glGenTextures(1, &gid);
+		operator()(data, width, height, internalFormat, format, type, mipmaps, wrap);
+	}
+
+	void operator()(void* data, int width, int height, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, bool mipmaps=false, GLenum wrap = GL_REPEAT){
 		this->width = width;
 		this->height = height;
 		this->internalFormat = internalFormat;
+		this->mipmaps = mipmaps;
 
 		bind();
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		sampleSettings(wrap, mipmaps);
-		//unbind();
 	}
 
 	void sampleSettings(GLenum wrap, bool mipmaps=true){
+		if (wrap == 0 || wrap == 1)
+			cout <<"tits" <<endl;//leave this in for a while
 		glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap);
 		glTexParameteri (target, GL_TEXTURE_WRAP_T, wrap);
 		if (target == GL_TEXTURE_3D) glTexParameteri(target, GL_TEXTURE_WRAP_R, wrap);
@@ -48,11 +72,11 @@ struct Texture {
 			glTexParameteri (target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	}
 
-	//bind to unit 0 (0 is reserved for all operations
+	//bind to unit 0 (0 is reserved for all operations)
 	void bind(){
-		static GLuint bound0 = 0;
+		activateUnit(0);
+		static GLuint bound0 = 0;//might be more efficient if opengl is stupid
 		if (bound0 != gid){
-			activateUnit(0);
 			glBindTexture(target, gid);
 			bound0 = gid;
 		}
@@ -63,12 +87,20 @@ struct Texture {
 		glBindTexture(target, gid);
 	}
 
-	void bind2FB(){
+	bool pushed;
+	void bind2FB(bool resizeViewport=false){
+		pushed = resizeViewport;
+		if (pushed)
+			Viewport::push(0,0,width,height);
 		::bind2FB(this);
 	}
 
-	void unbind2FB(){
+	void unbind2FB(bool genMipmaps=true){
 		::unbind2FB();
+		if (pushed)
+			Viewport::pop();
+		if (mipmaps && genMipmaps)
+			generateMipmaps();
 	}
 
 	//void unbind(){//does nothing
@@ -82,7 +114,7 @@ struct Texture {
 
 	//must use instead of glActiveTexture everywhere
 	static void activateUnit(GLuint unit){
-		static GLuint active = -1;
+		static GLuint active = -1;//might be more efficient if opengl is stupid
 		if (unit != active){
 			glActiveTexture(GL_TEXTURE0 + unit);
 			active = unit;
@@ -98,7 +130,7 @@ struct Texture {
 		char* data = new char[size];
 		bind();
 		glGetTexImage(target, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		//unbind();
+
 		if (data == NULL){
 			msg("error saving","");
 			return;
@@ -110,13 +142,6 @@ struct Texture {
 		ilTexImage(width,height,1,3,IL_RGB, IL_UNSIGNED_BYTE, data);
 		ilEnable(IL_FILE_OVERWRITE);
 		ilSaveImage(file);
-	}
-
-	//incomplete
-	Texture copyFormat(){
-		Texture t(target);
-		t(NULL,width,height,internalFormat);
-		return t;
 	}
 };
 
@@ -142,7 +167,7 @@ struct ILTexture : public Texture {
 		unsigned char* data = new unsigned char[4*width*height];
 		iluScale(width, height, 1);
 		ilCopyPixels(0, 0, 0, width, height, 1, GL_RGBA, IL_UNSIGNED_BYTE, data);
-		operator()(data, width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE,GL_REPEAT,true);
+		operator()(data, width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, true, GL_REPEAT);
 		ilDeleteImages  (1, &id);
 	}
 };
@@ -151,9 +176,9 @@ struct Texture3D : public Texture {
 	int depth;
 
 	Texture3D():Texture(GL_TEXTURE_3D){}
-#define PARAMS void* data, int width, int height, int depth, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, GLenum wrap=GL_CLAMP_TO_BORDER, bool mipmaps=false
+#define PARAMS void* data, int width, int height, int depth, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, bool mipmaps=false, GLenum wrap=GL_CLAMP_TO_BORDER
 	Texture3D(PARAMS):Texture(GL_TEXTURE_3D){
-		operator()(data,width,height,depth,internalFormat,format,type,wrap,mipmaps);
+		operator()(data,width,height,depth,internalFormat,format,type,mipmaps,wrap);
 	}
 
 	void operator()(PARAMS){
@@ -164,7 +189,6 @@ struct Texture3D : public Texture {
 		bind();
 		glTexImage3D(target, 0, internalFormat, width, height, depth, 0, format, type, data);
 		sampleSettings(wrap, mipmaps);
-		//unbind();
 	}
 #undef PARAMS
 };
@@ -173,9 +197,9 @@ struct Texture3D : public Texture {
 struct Texture1D : public Texture {
 
 	Texture1D():Texture(GL_TEXTURE_1D){}
-#define PARAMS void* data, int width, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, GLenum wrap=GL_REPEAT, bool mipmaps=false
+#define PARAMS void* data, int width, GLenum internalFormat=GL_RGBA, GLenum format=GL_RGBA, GLenum type=GL_UNSIGNED_BYTE, bool mipmaps=false, GLenum wrap=GL_REPEAT
 	Texture1D(PARAMS):Texture(GL_TEXTURE_1D){
-		operator()(data,width,internalFormat,format,type,wrap,mipmaps);
+		operator()(data,width,internalFormat,format,type,mipmaps,wrap);
 	}
 
 	void operator()(PARAMS){
@@ -183,7 +207,6 @@ struct Texture1D : public Texture {
 		bind();
 		glTexImage1D(target, 0, internalFormat, width, 0, format, type, data);
 		sampleSettings(wrap, mipmaps);
-		//unbind();
 	}
 #undef PARAMS
 };
