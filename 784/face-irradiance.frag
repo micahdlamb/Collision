@@ -22,6 +22,7 @@ layout(std140) uniform Object {
 	mat3 normalTransform;
 };
 
+//soft shadow calculator
 float chebyshevUpperBound(float distance, vec2 moments)
 {
 	// Surface is fully lit. as the current fragment is before the light occluder
@@ -31,7 +32,7 @@ float chebyshevUpperBound(float distance, vec2 moments)
 	// The fragment is either in shadow or penumbra. We now use chebyshev's upperBound to check
 	// How likely this pixel is to be lit (p_max)
 	float variance = moments.y - (moments.x*moments.x);
-	variance = max(variance,0.0000002);
+	variance = max(variance,0.000001);
 
 	float d = distance - moments.x;
 	float p_max = variance / (variance + d*d);
@@ -40,6 +41,8 @@ float chebyshevUpperBound(float distance, vec2 moments)
 }
 
 uniform sampler2D normals;
+uniform sampler2D colors;
+uniform sampler3D perlin;
 uniform sampler2D shadowMap;
 
 in vec3 localPos;
@@ -53,15 +56,23 @@ void main(void)
 {
 	vec2 moments0 = texture(shadowMap, shadowCoords[0].xy).rg;
 	float shadowedIntensity = chebyshevUpperBound(shadowCoords[0].z, moments0);
-	
-	//hardcoded for now
+
 	vec3 norm = texture(normals, uv).rgb*2-vec3(1);
 	norm = normalize(normalTransform * norm);
+
+	norm += vec3(
+		texture(perlin, localPos.xyz*150).r
+		,texture(perlin, localPos.zxy*150).r
+		,texture(perlin, localPos.yzx*150).r
+	)*.1;
+
 	if (!gl_FrontFacing) norm *= -1;
 
+	vec3 diffuseColor = texture(colors, uv).rgb;
 	vec3 lightPos = lights[0].pos;
 	vec3 lightDir = normalize(lightPos - worldPos);
 
-	//diffuse
-	outColor = vec4(vec3(1) * max(0.0, dot(norm, lightDir)) * shadowedIntensity, 1);
+	vec3 color = diffuseColor * max(0.0, dot(norm, lightDir)) * shadowedIntensity;
+
+	outColor = vec4(color , 1);
 }

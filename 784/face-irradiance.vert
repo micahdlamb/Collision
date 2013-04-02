@@ -1,6 +1,6 @@
 #version 330 core
 layout(location = 0) in vec3 pos;
-layout(location = 1) in vec2 texCoords;
+layout(location = 1) in vec2 texCoord;
 
 struct Light {
 	mat4 eye;
@@ -28,7 +28,7 @@ out vec3 shadowCoords[6];
 
 void main(void)
 {
-	uv = texCoords;
+	uv = texCoord;
 	localPos = pos;
 	worldPos = vec3(worldTransform * vec4(pos,1));
 
@@ -36,5 +36,5 @@ void main(void)
 	vec4 sc = lights[0].eye * vec4(worldPos,1);
 	shadowCoords[0] = ((sc / sc.w) * .5 + .5).xyz;
 
-	gl_Position = vec4(texCoords * 2 - vec2(1), 0, 1);
+	gl_Position = vec4(texCoord * 2 - vec2(1), 0, 1);
 }

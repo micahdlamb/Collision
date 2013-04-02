@@ -8,15 +8,16 @@ struct Blurrer : public Shader {
 	Texture* primary;
 	Texture tmp;
 
-	Uniform2f coordScale;
-	UniformSampler texture;
+	Uniform2f scale;
+	UniformSampler texture, stretch;
 
-	void operator()(Texture* tex){
-		Shader::operator()("blur.vert","blur.frag");
+	void operator()(Texture* tex, Texture* stretchTex){
+		Shader::operator()("face-blur.vert","face-blur.frag");
 		primary = tex;
 		tmp(primary->width,primary->height, primary->internalFormat);
-		coordScale("coordScale",this);
+		scale("scale",this);
 		texture("tex", this, primary);
+		stretch("stretch", this, stretchTex);
 		fb1(primary);
 		fb2(&tmp);
 	}
@@ -25,12 +26,12 @@ struct Blurrer : public Shader {
 		Viewport::push(0,0,primary->width, primary->height);
 		glDisable(GL_DEPTH_TEST);
 		Shader::enable();
-		coordScale = vec2(0,1.0f/primary->height);
+		scale = vec2(0,1.0f/primary->height);
 		texture = primary;
 		fb2.bind();
 		Shapes::square()->draw();
 		fb2.unbind();
-		coordScale = vec2(1.0f/primary->width, 0);
+		scale = vec2(1.0f/primary->width, 0);
 		texture = &tmp;
 		fb1.bind();
 		Shapes::square()->draw();
@@ -41,13 +42,13 @@ struct Blurrer : public Shader {
 };
 
 struct Face : Object {	
-	Shader irradianceShader;
-	Texture irradianceTexture;
+	Shader irradianceShader, beckmanShader;
+	Texture *irradianceTex, *colorTex, *stretchTex, *perlinTex;
 	//Framebuffer irradianceFB;
 	Blurrer blurrer;
 	int blur;
 
-	UniformSampler irradianceNormals, shadowMap, normals, specular, color, diffuse;
+	UniformSampler irradianceNormals, shadowMap, normals, irradianceColor, color, irradiancePerlin, perlin, irradiance, specular, rho_d, stretch, beckman;
 	Uniform1i reflectionsOn;
 
 	Face(mat4 transform, Texture* depth):
@@ -57,38 +58,63 @@ struct Face : Object {
 		setVAO(Shapes::OBJ4("face/james_hi.obj"));//load vertex info
 
 		//annoyingly I don't know any way to share sampler accross shaders...
+		//setup final shader samplers
 		Texture* normalsTex = new ILTexture("face/james_normal.png");
-		normals("normals",this,normalsTex);
-		color("color",this, new ILTexture("face/james.png"));
+		colorTex = new ILTexture("face/james.png");
+		stretchTex = new ILTexture("face/skin_stretch.dds");
+		perlinTex = new Perlin3D(16);
+		normals("normals", this, normalsTex);
+		color("colors", this, colorTex);
+		specular("specular", this, new ILTexture("face/skin_spec.dds"));
+		rho_d("rho_d", this, new ILTexture("face/rho_d.png"));
+		stretch("stretch", this, new ILTexture("face/skin_stretch.dds"));
+		perlin("perlin",this, perlinTex);
 		reflectionsOn("reflectionsOn", this, 0);
 
+		//irradiance shader
 		irradianceShader("face-irradiance.vert","face-irradiance.frag");//construct irradianceShader
 		Object::addShader(&irradianceShader);//share worldTransform with normalTransform with irradianceShader
+		//setup irradiance shader samplers
 		irradianceNormals("normals",&irradianceShader,normalsTex);
+		irradianceColor("colors", &irradianceShader,colorTex);
+		irradiancePerlin("perlin",&irradianceShader,perlinTex);
 
-		irradianceTexture(1024,1024,GL_RED,true);
-		blurrer(&irradianceTexture);
-		diffuse("diffuse",this,&irradianceTexture);
+		//beckman
+		beckman("beckman",this,new Texture(1024,1024,GL_RED,true,GL_CLAMP_TO_EDGE));//GL_CLAMP_TO_EDGE fixes an artifact when sampling close to edge
+		beckmanShader("texturedSquare.vert", "beckman.frag");
+		beckman.value->bind2FB();
+		Shapes::square()->draw();
+		beckman.value->unbind2FB();
+
+		//final shader irradiance
+		irradianceTex = new Texture(1024,1024,GL_RGB,true);
+		blurrer(irradianceTex, stretchTex);
+		irradiance("irradiance",this,irradianceTex);
+
+		//shadows
 		enableShadowCast();
 		shadowMap("shadowMap",&irradianceShader,depth);
 	}
 
 	void render(){
 		//draw irradiance
-		irradianceTexture.bind2FB(true);
-		glClearColor(0,0,0,0);
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		irradianceTex->bind2FB();
 		irradianceShader.enable();
 		vao->draw();
-		irradianceTexture.unbind2FB();
-
-		irradianceTexture.draw(0,0,300,300);//doesn't work with mip maps added
+		irradianceTex->unbind2FB();
+		irradianceTex->draw(0,0,200,200);
+		
 		for (int i=0; i < blur; i++)
 			blurrer.blur();
 
-		irradianceTexture.generateMipmaps();
-		irradianceTexture.draw(300,0,300,300);
-		shadowMap.value->draw(600,0,300,300);
+		irradianceTex->generateMipmaps();
+		irradianceTex->draw(200,0,200,200);
+		shadowMap.value->draw(400,0,200,200);
+		specular.value->draw(600,0,200,200);
+		rho_d.value->draw(800,0,200,200);
+		stretch.value->draw(1000,0,200,200);
+		beckman.value->draw(1200,0,200,200);
+
 		//convert 
 
 		//final draw
@@ -116,7 +142,7 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 		Viewport(x,y,w,h)
 		,nearPlane(.1f), farPlane(1001.f), fovY(60.f)
 		,FPInput(15)
-		,light(vec3(1,1,1), 1024, perspective(35.f, 1.f, 40.f, 100.f), glm::lookAt(vec3(0,0,60),vec3(0,0,0),vec3(0,1,0)))
+		,light(vec3(1,1,1), 2048, perspective(33.f, 1.f, 40.f, 85.f), glm::lookAt(vec3(0,0,60),vec3(0,0,0),vec3(0,1,0)))
 		,face(mat4(1), &light.depth)
 	{
 		Scene::operator()(this);
