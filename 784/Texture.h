@@ -87,17 +87,17 @@ struct Texture {
 		glBindTexture(target, gid);
 	}
 
-	bool pushed;
-	void bind2FB(bool resizeViewport=false){
-		pushed = resizeViewport;
-		if (pushed)
-			Viewport::push(0,0,width,height);
+	bool viewportPushed;
+	void bind2FB(bool resizeViewport=true, bool clear=true){
+		viewportPushed = resizeViewport;//store whether this needs popped
+		if (resizeViewport) Viewport::push(0,0,width,height);
 		::bind2FB(this);
+		if (clear) glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
 	void unbind2FB(bool genMipmaps=true){
 		::unbind2FB();
-		if (pushed)
+		if (viewportPushed)
 			Viewport::pop();
 		if (mipmaps && genMipmaps)
 			generateMipmaps();

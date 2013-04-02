@@ -143,12 +143,17 @@
       <Filter>unused</Filter>
     </ClInclude>
     <ClInclude Include="lens.h" />
-    <ClInclude Include="Face.h" />
     <ClInclude Include="Fireworks.h">
       <Filter>unused</Filter>
     </ClInclude>
     <ClInclude Include="Picking.h">
       <Filter>unused</Filter>
+    </ClInclude>
+    <ClInclude Include="Face.h">
+      <Filter>Face</Filter>
+    </ClInclude>
+    <ClInclude Include="Perlin.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +171,9 @@
     </Filter>
     <Filter Include="784">
       <UniqueIdentifier>{2fa0a76e-abaf-47f6-8c91-d54982fa73ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Face">
+      <UniqueIdentifier>{f7d93cb7-28a8-4500-87e7-9669d08b6879}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -311,16 +319,25 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="face.vert">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="face.frag">
-      <Filter>shaders</Filter>
+      <Filter>Face</Filter>
     </None>
     <None Include="face-irradiance.frag">
-      <Filter>shaders</Filter>
+      <Filter>Face</Filter>
     </None>
     <None Include="face-irradiance.vert">
-      <Filter>shaders</Filter>
+      <Filter>Face</Filter>
+    </None>
+    <None Include="face.frag">
+      <Filter>Face</Filter>
+    </None>
+    <None Include="beckman.frag">
+      <Filter>Face</Filter>
+    </None>
+    <None Include="face-blur.vert">
+      <Filter>Face</Filter>
+    </None>
+    <None Include="face-blur.frag">
+      <Filter>Face</Filter>
     </None>
   </ItemGroup>
 </Project>

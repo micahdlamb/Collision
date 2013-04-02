@@ -110,6 +110,7 @@
     <ClInclude Include="MyFireworks.h" />
     <ClInclude Include="MyWindow.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="Perlin.h" />
     <ClInclude Include="Pickable.h" />
     <ClInclude Include="Picking.h" />
     <ClInclude Include="RayTracer.h" />
@@ -136,6 +137,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="background.frag" />
+    <None Include="beckman.frag" />
     <None Include="blur.frag" />
     <None Include="blur.vert" />
     <None Include="brain2.frag" />
@@ -149,6 +151,8 @@
     <None Include="cubeBackground.vert" />
     <None Include="cubez.frag" />
     <None Include="cubez.vert" />
+    <None Include="face-blur.frag" />
+    <None Include="face-blur.vert" />
     <None Include="face-irradiance.frag" />
     <None Include="face-irradiance.vert" />
     <None Include="face.frag" />

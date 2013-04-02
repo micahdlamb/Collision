@@ -20,6 +20,13 @@ public:
 		if (!in.is_open()) error(string("can't open file: ") + vol);
 		in.read((char*)vals, x*y*z*sizeof(uchar));
 
+		/*debug perlin
+		for (U i=1; i < x-1; i++)
+			for (U j=1; j < y-1; j++)
+				for (U k=1; k < z-1; k++)
+					vals[index(i,j,k)] = (uchar)(perlin(vec3(i/(float)x*10,j/(float)y*10,k/(float)z*10)) * 255);
+		*/
+
 		//calc gradients
 		for (U i=1; i < x-1; i++)
 			for (U j=1; j < y-1; j++)
