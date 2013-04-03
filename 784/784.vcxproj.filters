@@ -339,5 +339,11 @@
     <None Include="face-blur.frag">
       <Filter>Face</Filter>
     </None>
+    <None Include="face-stretch.vert">
+      <Filter>Face</Filter>
+    </None>
+    <None Include="face-stretch.frag">
+      <Filter>Face</Filter>
+    </None>
   </ItemGroup>
 </Project>

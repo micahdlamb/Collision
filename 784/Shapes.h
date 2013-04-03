@@ -399,7 +399,7 @@ struct Shapes {
 		vao->buffer(&texCoords[0], texCoords.size() * sizeof(vec2));
 		vao->in(2,GL_FLOAT);
 		vao->unbind();
-		//vao->boundingVolume = new BoundingSphere(&vertices[0], vertices.size());
+		vao->boundingVolume = new BoundingSphere(&vertices[0], vertices.size());
 		return vao;
 	}
 };

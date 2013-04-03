@@ -42,13 +42,13 @@ struct Blurrer : public Shader {
 };
 
 struct Face : Object {	
-	Shader irradianceShader, beckmanShader;
+	Shader irradianceShader, beckmanShader, stretchShader;
 	Texture *irradianceTex, *colorTex, *stretchTex, *perlinTex;
 	//Framebuffer irradianceFB;
 	Blurrer blurrer;
 	int blur;
 
-	UniformSampler irradianceNormals, shadowMap, normals, irradianceColor, color, irradiancePerlin, perlin, irradiance, specular, rho_d, stretch, beckman;
+	UniformSampler irradianceNormals, shadowMap, normals, irradianceColor, color, irradiancePerlin, perlin, irradiance, specular, rho_d, beckman;
 	Uniform1i reflectionsOn;
 
 	Face(mat4 transform, Texture* depth):
@@ -61,13 +61,12 @@ struct Face : Object {
 		//setup final shader samplers
 		Texture* normalsTex = new ILTexture("face/james_normal.png");
 		colorTex = new ILTexture("face/james.png");
-		stretchTex = new ILTexture("face/skin_stretch.dds");
+		//stretchTex = new ILTexture("face/skin_stretch.dds");
 		perlinTex = new Perlin3D(16);
 		normals("normals", this, normalsTex);
 		color("colors", this, colorTex);
 		specular("specular", this, new ILTexture("face/skin_spec.dds"));
 		rho_d("rho_d", this, new ILTexture("face/rho_d.png"));
-		stretch("stretch", this, new ILTexture("face/skin_stretch.dds"));
 		perlin("perlin",this, perlinTex);
 		reflectionsOn("reflectionsOn", this, 0);
 
@@ -79,12 +78,20 @@ struct Face : Object {
 		irradianceColor("colors", &irradianceShader,colorTex);
 		irradiancePerlin("perlin",&irradianceShader,perlinTex);
 
-		//beckman
+		//make beckman tex
 		beckman("beckman",this,new Texture(1024,1024,GL_RED,true,GL_CLAMP_TO_EDGE));//GL_CLAMP_TO_EDGE fixes an artifact when sampling close to edge
 		beckmanShader("texturedSquare.vert", "beckman.frag");
 		beckman.value->bind2FB();
 		Shapes::square()->draw();
 		beckman.value->unbind2FB();
+
+		//make stretch tex
+		stretchTex = new Texture(1024,1024,GL_RG,true,GL_CLAMP_TO_EDGE);//needs to be same res as irradianceTex
+		stretchShader("face-stretch.vert", "face-stretch.frag");
+		Object::addShader(&stretchShader);
+		stretchTex->bind2FB();
+		vao->draw();
+		stretchTex->unbind2FB();
 
 		//final shader irradiance
 		irradianceTex = new Texture(1024,1024,GL_RGB,true);
@@ -112,7 +119,7 @@ struct Face : Object {
 		shadowMap.value->draw(400,0,200,200);
 		specular.value->draw(600,0,200,200);
 		rho_d.value->draw(800,0,200,200);
-		stretch.value->draw(1000,0,200,200);
+		stretchTex->draw(1000,0,200,200);
 		beckman.value->draw(1200,0,200,200);
 
 		//convert 
@@ -177,6 +184,7 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 	void Viewport::draw(){
 		FPInput::frame();
 		Scene::frame();
+		frame();
 		Clock::printFps(500);
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -193,6 +201,15 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 		light.unbind();
 	}
 
+	void frame(){
+		static int counter = 0;
+		if (counter++ % 10 == 0){
+			if (keys[','])
+				face.blur--;
+			if (keys['.'])
+				face.blur++;
+		}
+	}
 
 	//called by the ViewportManager
 	virtual void resize(){
@@ -240,6 +257,9 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 				break;
 			case 'r':
 				face.toggleReflections();
+				break;
+			case 'p':
+				face.setWorldTransform(mat4(1));
 		}
 	}
 

@@ -21,17 +21,40 @@ vec4 gauss[] = vec4[]
 
 void main()
 {
-	vec4 stretch = texture(stretch, uv);
-	//outColor = stretch;
+	//stretch is 1 / dist in world space that each pixel covers
+	//scale is the dist in texture space that each pixel covers
+	vec2 stretch = texture(stretch, uv).rg;
+
+	//texture space dist / world dist
+	vec2 ratio = stretch * scale;
+
+	//outColor = vec4(ratio*1024
+
+	//outColor = vec4(stretch,0,1);
 	//return;
+	
 	//vec2 width = scale * stretch * GaussWidth;//not sure what to use for gaussWidth
+	vec3 color = vec3(0);
+	for (int i = -1; i < 2; i += 2)
+		for( int j = 0; j < 6; j++ ){
+			vec4 x = gauss[j];
+			vec2 offset = i * x.r * ratio * 10;//10 converts 1e-4 (the units of stretch) to millimeters
+			vec3 irr = texture( tex, uv + offset ).rgb;
+			color += irr * x.gba * .5;
+		}
+
+	outColor = vec4(color,1);
+}
+
+/*orig
 	vec3 color = vec3(0);
 	for( int i = -5; i <= 5; i++ ){
 		vec4 fil = gauss[abs(i)];
+
 		vec3 irr = texture( tex, vec2( uv.x + i * scale.x, uv.y + i * scale.y ) ).rgb;
 		float w = (i==0 ? 1 : .5);//since all but i==0 get added twice
 		color += irr * fil.gba * w;
 	}
 
 	outColor = vec4(color,1);
-}
+*/
