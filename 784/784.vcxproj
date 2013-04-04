@@ -84,6 +84,7 @@
   <ItemGroup>
     <ClInclude Include="Background.h" />
     <ClInclude Include="BallManager.h" />
+    <ClInclude Include="BallManager2.h" />
     <ClInclude Include="Bezier.h" />
     <ClInclude Include="Blurrer.h" />
     <ClInclude Include="BSpline.h" />

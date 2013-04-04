@@ -1,6 +1,6 @@
 #include "MyWindow.h"
 #include "MyFireworks.h"
-#include "BallManager.h"
+#include "BallManager2.h"
 const char* title = "Tessellation";
 
 const int NUMOBJECTS = 500;

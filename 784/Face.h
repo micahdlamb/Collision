@@ -62,7 +62,7 @@ struct Face : Object {
 		Texture* normalsTex = new ILTexture("face/james_normal.png");
 		colorTex = new ILTexture("face/james.png");
 		//stretchTex = new ILTexture("face/skin_stretch.dds");
-		perlinTex = new Perlin3D(16);
+		perlinTex = new Perlin3D(512,1000);
 		normals("normals", this, normalsTex);
 		color("colors", this, colorTex);
 		specular("specular", this, new ILTexture("face/skin_spec.dds"));
@@ -170,8 +170,8 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 		backgrounds[2] = new CubeMap(hills, IL_ORIGIN_UPPER_LEFT);
 		#undef CM
 
-		reflections("reflections",&face,backgrounds[0]);
-		background(backgrounds[0]);
+		reflections("reflections",&face,backgrounds[2]);
+		background(backgrounds[2]);
 
 	}
 

@@ -155,6 +155,9 @@
     <ClInclude Include="Perlin.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="BallManager2.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">

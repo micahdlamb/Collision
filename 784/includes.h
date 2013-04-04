@@ -16,6 +16,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/perpendicular.hpp>
 #include <glm/gtc/noise.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <ctime>
 #include <vector>
 #include <map>

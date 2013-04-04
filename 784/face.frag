@@ -81,10 +81,10 @@ void main(void)
 	norm = normalize(normalTransform * norm);
 
 	norm += vec3(
-		texture(perlin, localPos.xyz*150).r
-		,texture(perlin, localPos.zxy*150).r
-		,texture(perlin, localPos.yzx*150).r
-	)*.1;
+		texture(perlin, localPos.xyz*.05 + vec3(.5)).r
+		,texture(perlin, localPos.zxy*.05 + vec3(.5)).r
+		,texture(perlin, localPos.yzx*.05 + vec3(.5)).r
+	)*.05;
 
 	if (!gl_FrontFacing) norm *= -1;
 

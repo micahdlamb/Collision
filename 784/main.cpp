@@ -8,12 +8,12 @@ uvec2 dim(1600,900);
 
 //#include "lab3.h"
 //#include "Volume.h"
-//#include "Tessellation.h"
+#include "Tessellation.h"
 //#include "RayTracer.h"
 //#include "Glass-Balls.h"
 //#include "Bullet.h"
 //#include "Lens.h"
-#include "Face.h"
+//#include "Face.h"
 
 //outdated
 //#include "cubez.h"
