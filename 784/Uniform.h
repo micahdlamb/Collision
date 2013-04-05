@@ -215,6 +215,8 @@ struct UniformSampler : public Uniform {
 	void set(Texture* value, GLuint textureUnit){
 		this->value = value;
 		this->textureUnit = textureUnit+1;//0 reserved for other texture operations
+		if (this->textureUnit >= Texture::maxUnits())
+			error("too many textures bound, you need to implement bufferbase functionality");
 		push();
 	}
 

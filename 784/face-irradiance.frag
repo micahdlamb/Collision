@@ -66,6 +66,13 @@ void main(void)
 		,texture(perlin, localPos.yzx*.05 + vec3(.5)).r
 	)*.05;
 
+	/*lol kind of works
+	float noise = texture(perlin, uv*5).r;
+	vec3 distortedPos = worldPos + norm * noise;
+	norm = normalize(cross(dFdx(distortedPos), dFdy(distortedPos)));
+	*/
+
+
 	if (!gl_FrontFacing) norm *= -1;
 
 	vec3 diffuseColor = texture(colors, uv).rgb;

@@ -25,11 +25,18 @@ layout(std140) uniform Object {
 uniform sampler2D normals;
 uniform sampler2D colors;
 uniform sampler2D irradiance;
+uniform sampler2D gauss0;
+uniform sampler2D gauss1;
+uniform sampler2D gauss2;
+uniform sampler2D gauss3;
+uniform sampler2D gauss4;
+uniform sampler2D gauss5;
 uniform sampler2D specular;
 uniform sampler2D beckman;
 uniform sampler3D perlin;
 uniform samplerCube reflections;
 uniform int reflectionsOn;
+uniform int phongOn;
 
 in vec3 localPos;
 in vec3 worldPos;
@@ -80,16 +87,28 @@ void main(void)
 	vec3 norm = texture(normals, uv).rgb*2-vec3(1);
 	norm = normalize(normalTransform * norm);
 
+
 	norm += vec3(
 		texture(perlin, localPos.xyz*.05 + vec3(.5)).r
 		,texture(perlin, localPos.zxy*.05 + vec3(.5)).r
 		,texture(perlin, localPos.yzx*.05 + vec3(.5)).r
 	)*.05;
 
+
 	if (!gl_FrontFacing) norm *= -1;
 
+	//non blurred irradiance
+	vec3 nondiffused = texture(irradiance, uv).rgb;
+	//blurred irradiance
+	vec3 diffused =
+		texture(gauss0, uv).rgb * vec3(.233, .455, .649)
+		+ texture(gauss1, uv).rgb * vec3(.1, .336, .344)
+		+ texture(gauss2, uv).rgb * vec3(.118, .198, 0)
+		+ texture(gauss3, uv).rgb * vec3(.113, .007, .007)
+		+ texture(gauss4, uv).rgb * vec3(.358, .004, 0)
+		+ texture(gauss5, uv).rgb * vec3(.078, 0, 0);
+
 	//Color the surface
-	vec3 irradiance = texture(irradiance, uv).rgb;
 	vec3 diffuseColor = texture(colors, uv).rgb;
 	vec3 lightColor = lights[0].color;
 	vec3 lightPos = lights[0].pos;
@@ -111,13 +130,9 @@ void main(void)
 
 
 	//ambient
-	vec3 color = amb * diffuseColor;
+	vec3 color = amb * diffuseColor * 0;
 	//diffuse
-	//color += diffuseColor * dif * max(0.0, dot(norm, lightDir));
-	//http://developer.download.nvidia.com/presentations/2007/gdc/Advanced_Skin.pdf slide 96
-	//I would need to recompute shadow stuff etc don't feel like doing right now
-	//color += mix(diffuseColor, irradiance, .8);
-	color += irradiance;
+	color += phongOn==1 ? nondiffused : diffused;
 	//specular
 	//color += lightColor * spec * pow(max(0.0, dot(reflectDir, eyeDir)), shininess);
 	color += lightColor * spec;

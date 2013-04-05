@@ -2,7 +2,7 @@
 #include <limits.h>
 
 const char* title = "Realistic Face";
-
+/*orig
 struct Blurrer : public Shader {
 	Framebuffer fb1, fb2;
 	Texture* primary;
@@ -40,16 +40,71 @@ struct Blurrer : public Shader {
 		texture = primary;//leave texture unit as it was
 	}
 };
+*/
+
+struct Blurrer : public Shader {
+	Texture* src;
+	Texture tmp;
+	Texture gauss[6];
+
+	Uniform1f gaussWidth;
+	Uniform2f scale;
+	UniformSampler texture, stretch;
+
+	void operator()(Texture* tex, Texture* stretchTex){
+		Shader::operator()("face-blur.vert","face-blur.frag");
+		src = tex;
+		tmp(src->width,src->height, src->internalFormat, true);
+		scale("scale",this);
+		texture("tex", this, src);
+		stretch("stretch", this, stretchTex);
+		gaussWidth("gaussWidth", this);
+
+		for (int i=0; i < 6; i++)
+			gauss[i](src->width,src->height, src->internalFormat, true);//using mipmaps
+
+	}
+
+	void blur(int tex, float gw, bool feedback){
+		gaussWidth = gw;
+		scale = vec2(0, 1.0f/src->height);
+		texture = feedback ? &gauss[tex] : src;
+		tmp.bind2FB(false,false);
+		Shapes::square()->draw();
+		tmp.unbind2FB();
+
+		scale = vec2(1.0f/src->width, 0);
+		texture = &tmp;
+		gauss[tex].bind2FB(false,false);
+		Shapes::square()->draw();
+		gauss[tex].unbind2FB();
+	}
+
+	void blur(bool feedback){
+		Viewport::push(0,0,src->width, src->height);
+		glDisable(GL_DEPTH_TEST);
+		Shader::enable();
+		blur(0, .0064, feedback);
+		blur(1, .0484, feedback);
+		blur(2, .187, feedback);
+		blur(3, .567, feedback);
+		blur(4, 1.99, feedback);
+		blur(5, 7.41, feedback);
+		Viewport::pop();
+		texture = src;//leave texture unit as it was
+	}
+};
+
 
 struct Face : Object {	
 	Shader irradianceShader, beckmanShader, stretchShader;
 	Texture *irradianceTex, *colorTex, *stretchTex, *perlinTex;
-	//Framebuffer irradianceFB;
 	Blurrer blurrer;
 	int blur;
 
 	UniformSampler irradianceNormals, shadowMap, normals, irradianceColor, color, irradiancePerlin, perlin, irradiance, specular, rho_d, beckman;
-	Uniform1i reflectionsOn;
+	UniformSampler gauss0, gauss1, gauss2, gauss3, gauss4, gauss5;
+	Uniform1i reflectionsOn, phongOn;
 
 	Face(mat4 transform, Texture* depth):
 		Object(transform,"face.vert", "face.frag")
@@ -62,13 +117,15 @@ struct Face : Object {
 		Texture* normalsTex = new ILTexture("face/james_normal.png");
 		colorTex = new ILTexture("face/james.png");
 		//stretchTex = new ILTexture("face/skin_stretch.dds");
-		perlinTex = new Perlin3D(512,1000);
+		perlinTex = new Perlin3D(128,1000);
+		//perlinTex = new ILTexture("face/noise.png");
 		normals("normals", this, normalsTex);
 		color("colors", this, colorTex);
 		specular("specular", this, new ILTexture("face/skin_spec.dds"));
 		rho_d("rho_d", this, new ILTexture("face/rho_d.png"));
 		perlin("perlin",this, perlinTex);
 		reflectionsOn("reflectionsOn", this, 0);
+		phongOn("phongOn", this, 0);
 
 		//irradiance shader
 		irradianceShader("face-irradiance.vert","face-irradiance.frag");//construct irradianceShader
@@ -98,6 +155,14 @@ struct Face : Object {
 		blurrer(irradianceTex, stretchTex);
 		irradiance("irradiance",this,irradianceTex);
 
+		//setup irradiance gauss samplers for final pass
+		gauss0("gauss0", this, &blurrer.gauss[0]);
+		gauss1("gauss1", this, &blurrer.gauss[1]);
+		gauss2("gauss2", this, &blurrer.gauss[2]);
+		gauss3("gauss3", this, &blurrer.gauss[3]);
+		gauss4("gauss4", this, &blurrer.gauss[4]);
+		gauss5("gauss5", this, &blurrer.gauss[5]);
+
 		//shadows
 		enableShadowCast();
 		shadowMap("shadowMap",&irradianceShader,depth);
@@ -109,18 +174,21 @@ struct Face : Object {
 		irradianceShader.enable();
 		vao->draw();
 		irradianceTex->unbind2FB();
-		irradianceTex->draw(0,0,200,200);
+		//irradianceTex->draw(0,0,200,200);
 		
 		for (int i=0; i < blur; i++)
-			blurrer.blur();
+			blurrer.blur(i>0);
 
-		irradianceTex->generateMipmaps();
+		//irradianceTex->generateMipmaps();
 		irradianceTex->draw(200,0,200,200);
 		shadowMap.value->draw(400,0,200,200);
 		specular.value->draw(600,0,200,200);
 		rho_d.value->draw(800,0,200,200);
 		stretchTex->draw(1000,0,200,200);
 		beckman.value->draw(1200,0,200,200);
+
+		for (int i=0; i < 6; i++)
+			blurrer.gauss[i].draw(0,(5-i) * 200, 200, 200);
 
 		//convert 
 
@@ -132,6 +200,10 @@ struct Face : Object {
 	void toggleReflections(){
 		Shader::enable();
 		reflectionsOn = *reflectionsOn ? 0 : 1;
+	}
+	void togglePhong(){
+		Shader::enable();
+		phongOn = *phongOn ? 0 : 1;
 	}
 };
 
@@ -205,7 +277,7 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 		static int counter = 0;
 		if (counter++ % 10 == 0){
 			if (keys[','])
-				face.blur--;
+				face.blur = std::max(1, face.blur-1);
 			if (keys['.'])
 				face.blur++;
 		}
@@ -250,13 +322,16 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 				setBackground(2);
 				break;
 			case ',':
-				face.blur = std::max(0, face.blur-1);
+				face.blur = std::max(1, face.blur-1);
 				break;
 			case '.':
 				face.blur++;
 				break;
 			case 'r':
 				face.toggleReflections();
+				break;
+			case ' ':
+				face.togglePhong();
 				break;
 			case 'p':
 				face.setWorldTransform(mat4(1));

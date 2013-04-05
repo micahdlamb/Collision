@@ -103,10 +103,6 @@ struct Texture {
 			generateMipmaps();
 	}
 
-	//void unbind(){//does nothing
-		//glBindTexture(target,0);
-	//}
-
 	void generateMipmaps(){
 		bind();
 		glGenerateMipmap(target);
@@ -119,6 +115,14 @@ struct Texture {
 			glActiveTexture(GL_TEXTURE0 + unit);
 			active = unit;
 		}
+	}
+
+	static int maxUnits(){
+		static int i=0;
+		if (i) return i;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &i);
+		cout << i << endl;
+		return i;
 	}
 
 	void draw(float x, float y, float w, float h){
