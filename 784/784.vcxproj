@@ -125,6 +125,7 @@
     <ClInclude Include="MyTerrain.h" />
     <ClInclude Include="TerrainWalker.h" />
     <ClInclude Include="Tessellation.h" />
+    <ClInclude Include="Tessellation2.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="FeedbackLoop.h" />
     <ClInclude Include="TexturedSquare.h" />

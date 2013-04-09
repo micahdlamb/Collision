@@ -44,6 +44,7 @@ uniform sampler2D normals;
 uniform sampler2D colors;
 uniform sampler3D perlin;
 uniform sampler2D shadowMap;
+uniform vec2 mousePos;
 
 in vec3 localPos;
 in vec3 worldPos;
@@ -54,17 +55,26 @@ out vec4 outColor;
 
 void main(void)
 {
+	//mouse glow effect
+	vec4 pos = eye * vec4(worldPos,1);
+	pos /= pos.w;
+	pos = pos*.5 +vec4(.5);
+	if (length(pos.xy - mousePos) < .01){
+		outColor = vec4(1);
+		return;
+	}
+
+
 	vec2 moments0 = texture(shadowMap, shadowCoords[0].xy).rg;
 	float shadowedIntensity = chebyshevUpperBound(shadowCoords[0].z, moments0);
 
-	vec3 norm = texture(normals, uv).rgb*2-vec3(1);
-	norm = normalize(normalTransform * norm);
-
+	vec3 norm = normalTransform * (texture(normals, uv).rgb*2-vec3(1));
 	norm += vec3(
 		texture(perlin, localPos.xyz*.05 + vec3(.5)).r
 		,texture(perlin, localPos.zxy*.05 + vec3(.5)).r
 		,texture(perlin, localPos.yzx*.05 + vec3(.5)).r
-	)*.05;
+	)*.08;
+	norm = normalize(norm);
 
 	/*lol kind of works
 	float noise = texture(perlin, uv*5).r;

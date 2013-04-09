@@ -81,18 +81,13 @@ void main(void)
 	);
 	*/
 
-	//hardcoded for now
-	float amb = .2;
-	float shininess = 30;
-	vec3 norm = texture(normals, uv).rgb*2-vec3(1);
-	norm = normalize(normalTransform * norm);
-
-
+	vec3 norm = normalTransform * (texture(normals, uv).rgb*2-vec3(1));
 	norm += vec3(
 		texture(perlin, localPos.xyz*.05 + vec3(.5)).r
 		,texture(perlin, localPos.zxy*.05 + vec3(.5)).r
 		,texture(perlin, localPos.yzx*.05 + vec3(.5)).r
-	)*.05;
+	)*.08;
+	norm = normalize(norm);
 
 
 	if (!gl_FrontFacing) norm *= -1;
@@ -101,44 +96,48 @@ void main(void)
 	vec3 nondiffused = texture(irradiance, uv).rgb;
 	//blurred irradiance
 	vec3 diffused =
-		texture(gauss0, uv).rgb * vec3(.233, .455, .649)
-		+ texture(gauss1, uv).rgb * vec3(.1, .336, .344)
-		+ texture(gauss2, uv).rgb * vec3(.118, .198, 0)
-		+ texture(gauss3, uv).rgb * vec3(.113, .007, .007)
-		+ texture(gauss4, uv).rgb * vec3(.358, .004, 0)
-		+ texture(gauss5, uv).rgb * vec3(.078, 0, 0);
+		texture(gauss0, uv).rgb * vec3(.22, .437, .635)
+		+ texture(gauss1, uv).rgb * vec3(.101, .355, .365)
+		+ texture(gauss2, uv).rgb * vec3(.119, .208, 0)
+		+ texture(gauss3, uv).rgb * vec3(.114, 0, 0)
+		+ texture(gauss4, uv).rgb * vec3(.364, 0, 0)
+		+ texture(gauss5, uv).rgb * vec3(.08, 0, 0);
 
 	//Color the surface
+	float amb = .1;
+	float shininess = 30;
 	vec3 diffuseColor = texture(colors, uv).rgb;
 	vec3 lightColor = lights[0].color;
 	vec3 lightPos = lights[0].pos;
 	vec3 lightDir = normalize(lightPos - worldPos);
 	vec3 eyeDir = normalize(eyePos - worldPos);
-	vec3 reflectDir = reflect(-lightDir, norm);
+	vec3 lightReflectDir = reflect(-lightDir, norm);
+	vec3 eyeReflectDir = reflect(-eyeDir, norm);
 
 	//outColor = texture(beckman,worldPos.xy);
 	//return;
 
 	
-	vec4 s = texture(specular, uv);//not sure what all the components represent
-	//float m = s.w * .09 + .23;
-	float m = .3;//from http://developer.download.nvidia.com/presentations/2007/gdc/Advanced_Skin.pdf
-	float rho_s = s.x * .16 + .18;//copied from advanced skin - final.cg, line 203
-	float spec = KS_Skin_Specular(norm, lightDir, eyeDir, m, rho_s);
+
 	//outColor = vec4(spec,spec,spec,1);
 	//return;
 
 
 	//ambient
-	vec3 color = amb * diffuseColor * 0;
+	vec3 color = amb * mix(diffuseColor, textureLod(reflections, eyeReflectDir, 5).rgb, .2);
+	
 	//diffuse
 	color += phongOn==1 ? nondiffused : diffused;
-	//specular
-	//color += lightColor * spec * pow(max(0.0, dot(reflectDir, eyeDir)), shininess);
-	color += lightColor * spec;
 	
+	//specular
+	vec4 s = texture(specular, uv);//not sure what all the components represent
+	//float m = s.w * .09 + .23;
+	float m = .3;//from http://developer.download.nvidia.com/presentations/2007/gdc/Advanced_Skin.pdf
+	float rho_s = s.x * .16 + .18;//copied from advanced skin - final.cg, line 203
+	color += lightColor * KS_Skin_Specular(norm, lightDir, eyeDir, m, rho_s);
+
 	if (reflectionsOn == 1)
-		color = mix(color, texture(reflections, reflect(-eyeDir, norm)).rgb, .2);
+		color = mix(color, textureLod(reflections, eyeReflectDir, 5).rgb, .8);
 
 	outColor = vec4(color,1);
 }

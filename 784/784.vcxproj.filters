@@ -158,6 +158,7 @@
     <ClInclude Include="BallManager2.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="Tessellation2.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">

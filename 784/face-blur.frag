@@ -2,6 +2,7 @@
 in vec2 uv;
 
 uniform float gaussWidth;
+uniform float scaleWidth;
 uniform vec2 scale;
 uniform sampler2D tex;
 uniform sampler2D stretch;
@@ -17,13 +18,30 @@ void main()
 	vec2 stretch = texture(stretch, uv).rg;
 
 	//texture space dist * gaussWidth / world dist
-	vec2 netFilterWidth = stretch * 10 * scale * gaussWidth;//*10 converts the units of stretch (1e-4) to millimeters
+	vec2 netFilterWidth = stretch * 20 * scale * gaussWidth * scaleWidth;//*20 converts the units of stretch (.5e-4) to millimeters
 	vec2 coords = uv - 3 * netFilterWidth;
 	vec4 sum = vec4(0);
 	for( int i = 0; i < 7; i++ ){
 		sum += texture(tex, coords) * curve[i];
 		coords += netFilterWidth;
 	}
+
+	/*
+	sum += texture(tex, coords) * curve[0];
+	coords += netFilterWidth;
+	sum += texture(tex, coords) * curve[1];
+	coords += netFilterWidth;
+	sum += texture(tex, coords) * curve[2];
+	coords += netFilterWidth;
+	sum += texture(tex, coords) * curve[3];
+	coords += netFilterWidth;
+	sum += texture(tex, coords) * curve[4];
+	coords += netFilterWidth;
+	sum += texture(tex, coords) * curve[5];
+	coords += netFilterWidth;
+	sum += texture(tex, coords) * curve[6];
+	coords += netFilterWidth;
+	*/
 
 	outColor = sum;
 }

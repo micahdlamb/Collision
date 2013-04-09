@@ -54,14 +54,14 @@ struct Blurrer : public Shader {
 	void operator()(Texture* tex, Texture* stretchTex){
 		Shader::operator()("face-blur.vert","face-blur.frag");
 		src = tex;
-		tmp(src->width,src->height, src->internalFormat, true);
+		tmp(src->width,src->height, src->internalFormat, src->mipmaps, src->wrap);
 		scale("scale",this);
 		texture("tex", this, src);
 		stretch("stretch", this, stretchTex);
 		gaussWidth("gaussWidth", this);
 
 		for (int i=0; i < 6; i++)
-			gauss[i](src->width,src->height, src->internalFormat, true);//using mipmaps
+			gauss[i](src->width,src->height, src->internalFormat, src->mipmaps, src->wrap);//using mipmaps
 
 	}
 
@@ -84,12 +84,12 @@ struct Blurrer : public Shader {
 		Viewport::push(0,0,src->width, src->height);
 		glDisable(GL_DEPTH_TEST);
 		Shader::enable();
-		blur(0, .0064, feedback);
-		blur(1, .0484, feedback);
-		blur(2, .187, feedback);
-		blur(3, .567, feedback);
-		blur(4, 1.99, feedback);
-		blur(5, 7.41, feedback);
+		blur(0, .042, feedback);
+		blur(1, .22, feedback);
+		blur(2, .433, feedback);
+		blur(3, .753, feedback);
+		blur(4, 1.412, feedback);
+		blur(5, 2.722, feedback);
 		Viewport::pop();
 		texture = src;//leave texture unit as it was
 	}
@@ -104,7 +104,11 @@ struct Face : Object {
 
 	UniformSampler irradianceNormals, shadowMap, normals, irradianceColor, color, irradiancePerlin, perlin, irradiance, specular, rho_d, beckman;
 	UniformSampler gauss0, gauss1, gauss2, gauss3, gauss4, gauss5;
+	
+	//for fun
 	Uniform1i reflectionsOn, phongOn;
+	Uniform2f mousePos;
+	Uniform1f scaleWidth;
 
 	Face(mat4 transform, Texture* depth):
 		Object(transform,"face.vert", "face.frag")
@@ -134,6 +138,7 @@ struct Face : Object {
 		irradianceNormals("normals",&irradianceShader,normalsTex);
 		irradianceColor("colors", &irradianceShader,colorTex);
 		irradiancePerlin("perlin",&irradianceShader,perlinTex);
+		mousePos("mousePos", &irradianceShader);
 
 		//make beckman tex
 		beckman("beckman",this,new Texture(1024,1024,GL_RED,true,GL_CLAMP_TO_EDGE));//GL_CLAMP_TO_EDGE fixes an artifact when sampling close to edge
@@ -151,8 +156,9 @@ struct Face : Object {
 		stretchTex->unbind2FB();
 
 		//final shader irradiance
-		irradianceTex = new Texture(1024,1024,GL_RGB,true);
+		irradianceTex = new Texture(1024,1024,GL_RGB,true,GL_CLAMP_TO_EDGE);
 		blurrer(irradianceTex, stretchTex);
+		scaleWidth("scaleWidth",&blurrer,1);
 		irradiance("irradiance",this,irradianceTex);
 
 		//setup irradiance gauss samplers for final pass
@@ -204,6 +210,14 @@ struct Face : Object {
 	void togglePhong(){
 		Shader::enable();
 		phongOn = *phongOn ? 0 : 1;
+	}
+	void setMousePos(vec2 pos){
+		irradianceShader.enable();
+		mousePos = pos;
+	}
+	void setScaleWidth(float sw){
+		blurrer.enable();
+		scaleWidth = sw;
 	}
 };
 
@@ -281,6 +295,12 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 			if (keys['.'])
 				face.blur++;
 		}
+
+		if (keys[';'])
+			face.setScaleWidth(*face.scaleWidth * (1 - Clock::delta));
+		if (keys['\''])
+			face.setScaleWidth(*face.scaleWidth * (1 + Clock::delta));
+
 	}
 
 	//called by the ViewportManager
@@ -294,7 +314,7 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 
 	virtual void mouseMove(int x, int y) {
 		FPInput::mouseMove(x, y);
-
+		
 		//rotate worldTransform with right mouse
 		float w = 5;
 		if (mouseDown[1]){
@@ -306,6 +326,7 @@ struct FaceScene : public Viewport, public Scene, public FPInput {
 	}
 
 	virtual void passiveMouseMove(int x, int y){
+		face.setMousePos(vec2(x,y)/vec2(w,h));
 	}
 
 	virtual void keyDown (unsigned char key, int x, int y) {

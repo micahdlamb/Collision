@@ -11,6 +11,7 @@ struct Texture {
 	GLuint gid;
 	GLenum target;
 	bool mipmaps;
+	GLenum wrap;
 
 	//used to make copies
 	GLenum internalFormat;
@@ -49,7 +50,6 @@ struct Texture {
 		this->width = width;
 		this->height = height;
 		this->internalFormat = internalFormat;
-		this->mipmaps = mipmaps;
 
 		bind();
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
@@ -57,6 +57,9 @@ struct Texture {
 	}
 
 	void sampleSettings(GLenum wrap, bool mipmaps=true){
+		this->wrap = wrap;
+		this->mipmaps = mipmaps;
+
 		if (wrap == 0 || wrap == 1)
 			cout <<"tits" <<endl;//leave this in for a while
 		glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap);
@@ -208,6 +211,8 @@ struct Texture1D : public Texture {
 
 	void operator()(PARAMS){
 		this->width = width;
+		this->internalFormat = internalFormat;
+
 		bind();
 		glTexImage1D(target, 0, internalFormat, width, 0, format, type, data);
 		sampleSettings(wrap, mipmaps);

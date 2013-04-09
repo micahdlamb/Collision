@@ -29,8 +29,11 @@ struct Ball : public Kinematic, public Pickable {
 	}
 	void move(float step, vec3 acc=vec3(0)){
 		if (trySleep()) return;
+		//vel += acc * step;
+		//pos += vel * step;
+		vec3 vel0 = vel;
 		vel += acc * step;
-		pos += vel * step;
+		pos += (vel + vel0) * .5f * step;
 		updateBV();
 	}
 
