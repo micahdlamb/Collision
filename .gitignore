@@ -1,0 +1,11 @@
+*.db
+*.suo
+*.sdf
+*.normals
+src/MRbrain
+src/Brain1.h
+src/Brain2.h
+src/lib
+src/old
+src/Release
+src/Debug

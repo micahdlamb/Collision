@@ -1,0 +1,200 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E8ADC70B-7F67-4E92-8284-78AF68B4215C}</ProjectGuid>
+    <RootNamespace>My781hw1</RootNamespace>
+    <ProjectName>collision</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>C:\Users\Micah\Documents\Visual Studio 2010\include;$(IncludePath)</IncludePath>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>C:\Users\Micah\Documents\Visual Studio 2010\include;$(IncludePath)</IncludePath>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)\lib\bullet\Debug;$(ProjectDir)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freeglut.lib;glew32.lib;DevIL.lib;ILU.lib;ILUT.lib;glui32-debug.lib;BulletDynamics_Debug.lib;BulletCollision_Debug.lib;LinearMath_Debug.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(ProjectDir)\lib\bullet\Release;$(ProjectDir)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freeglut.lib;glew32.lib;DevIL.lib;ILU.lib;ILUT.lib;glui32.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="helpers.cc" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="GLState.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Background.h" />
+    <ClInclude Include="BallManager.h" />
+    <ClInclude Include="BallManager2.h" />
+    <ClInclude Include="Bezier.h" />
+    <ClInclude Include="Blurrer.h" />
+    <ClInclude Include="BSpline.h" />
+    <ClInclude Include="Bullet.h" />
+    <ClInclude Include="Chase.h" />
+    <ClInclude Include="Clock.h" />
+    <ClInclude Include="ControlCurve.h" />
+    <ClInclude Include="CubeMap.h" />
+    <ClInclude Include="Face.h" />
+    <ClInclude Include="Fireworks.h" />
+    <ClInclude Include="Framebuffer.h" />
+    <ClInclude Include="Geometry.h" />
+    <ClInclude Include="globals.h" />
+    <ClInclude Include="Grid2d.h" />
+    <ClInclude Include="gui.h" />
+    <ClInclude Include="helpers.h" />
+    <ClInclude Include="includes.h" />
+    <ClInclude Include="InputHandler.h" />
+    <ClInclude Include="ITerrain.h" />
+    <ClInclude Include="lab3.h" />
+    <ClInclude Include="lens.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="MyFireworks.h" />
+    <ClInclude Include="MyWindow.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="Perlin.h" />
+    <ClInclude Include="Pickable.h" />
+    <ClInclude Include="Picking.h" />
+    <ClInclude Include="RayTracer.h" />
+    <ClInclude Include="Glass-Balls.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Shapes.h" />
+    <ClInclude Include="Smoother.h" />
+    <ClInclude Include="Surface.h" />
+    <ClInclude Include="Surfaces.h" />
+    <ClInclude Include="MyTerrain.h" />
+    <ClInclude Include="TerrainWalker.h" />
+    <ClInclude Include="Tessellation.h" />
+    <ClInclude Include="Tessellation2.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="FeedbackLoop.h" />
+    <ClInclude Include="TexturedSquare.h" />
+    <ClInclude Include="Uniform.h" />
+    <ClInclude Include="VAO.h" />
+    <ClInclude Include="Viewer.h" />
+    <ClInclude Include="Viewport.h" />
+    <ClInclude Include="Volume.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="background.frag" />
+    <None Include="blur.frag" />
+    <None Include="blur.vert" />
+    <None Include="chase.frag" />
+    <None Include="chase.geom" />
+    <None Include="chase.vert" />
+    <None Include="chase_update.geom" />
+    <None Include="chase_update.vert" />
+    <None Include="cubeBackground.frag" />
+    <None Include="cubeBackground.vert" />
+    <None Include="face\beckman.frag" />
+    <None Include="face\blur.frag" />
+    <None Include="face\blur.vert" />
+    <None Include="face\face.frag" />
+    <None Include="face\face.vert" />
+    <None Include="face\irradiance.frag" />
+    <None Include="face\irradiance.vert" />
+    <None Include="face\james.png" />
+    <None Include="face\james_normal.png" />
+    <None Include="face\noise.png" />
+    <None Include="face\perturbNormals.jpg" />
+    <None Include="face\rho_d.png" />
+    <None Include="face\skin_spec.dds" />
+    <None Include="face\skin_stretch.dds" />
+    <None Include="face\stretch.frag" />
+    <None Include="face\stretch.vert" />
+    <None Include="fireworks.frag" />
+    <None Include="fireworks.geom" />
+    <None Include="fireworks.vert" />
+    <None Include="fireworks_update.geom" />
+    <None Include="fireworks_update.vert" />
+    <None Include="lens.frag" />
+    <None Include="line.frag" />
+    <None Include="line.vert" />
+    <None Include="object.frag" />
+    <None Include="pick.frag" />
+    <None Include="pick.vert" />
+    <None Include="rayTracer.frag" />
+    <None Include="rayTracer.vert" />
+    <None Include="object.vert" />
+    <None Include="glass-balls.frag" />
+    <None Include="shadow.frag" />
+    <None Include="shadow.vert" />
+    <None Include="shadowTess.frag" />
+    <None Include="surface.frag" />
+    <None Include="surface.vert" />
+    <None Include="tess.frag" />
+    <None Include="tess.geom" />
+    <None Include="tess.tcs.glsl" />
+    <None Include="tess.tes.glsl" />
+    <None Include="tess.vert" />
+    <None Include="tess_smooth.frag" />
+    <None Include="tess_smooth.tcs.glsl" />
+    <None Include="tess_smooth.tes.glsl" />
+    <None Include="texturedSquare.frag" />
+    <None Include="texturedSquare.vert" />
+    <None Include="volume.frag" />
+    <None Include="volume.vert" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
