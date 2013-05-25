@@ -11,7 +11,7 @@ uvec2 dim(1600,900);
 //#include "Tessellation.h"
 //#include "Tessellation2.h"
 //#include "RayTracer.h"
-#include "Glass-Balls.h"
+#include "GlassBalls.h"
 //#include "Bullet.h"
 //#include "Lens.h"
 //#include "Face.h"

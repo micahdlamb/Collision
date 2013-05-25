@@ -114,7 +114,7 @@
     <ClInclude Include="Pickable.h" />
     <ClInclude Include="Picking.h" />
     <ClInclude Include="RayTracer.h" />
-    <ClInclude Include="Glass-Balls.h" />
+    <ClInclude Include="GlassBalls.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Shapes.h" />
@@ -175,7 +175,7 @@
     <None Include="rayTracer.frag" />
     <None Include="rayTracer.vert" />
     <None Include="object.vert" />
-    <None Include="glass-balls.frag" />
+    <None Include="glassBalls.frag" />
     <None Include="shadow.frag" />
     <None Include="shadow.vert" />
     <None Include="shadowTess.frag" />

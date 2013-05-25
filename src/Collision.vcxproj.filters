@@ -130,7 +130,6 @@
     <ClInclude Include="BallManager.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="Glass-Balls.h" />
     <ClInclude Include="Volume.h" />
     <ClInclude Include="lens.h" />
     <ClInclude Include="Fireworks.h">
@@ -152,6 +151,7 @@
     <ClInclude Include="Face.h">
       <Filter>Face</Filter>
     </ClInclude>
+    <ClInclude Include="GlassBalls.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -291,9 +291,6 @@
     <None Include="background.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="glass-balls.frag">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="volume.vert">
       <Filter>shaders</Filter>
     </None>
@@ -350,6 +347,9 @@
     </None>
     <None Include="face\beckman.frag">
       <Filter>Face</Filter>
+    </None>
+    <None Include="glassBalls.frag">
+      <Filter>shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

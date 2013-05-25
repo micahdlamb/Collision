@@ -18,21 +18,12 @@ layout(std140) uniform Global {
 	vec2 screenDim;
 };
 
-uniform mat4 viewTransform;
+uniform mat4 transform;
 
 out vec3 worldPos;
 
 void main(void)
 {
-	//find world position for quad that is directly in front of the viewer
-	mat4 m = mat4(1);
-	m[3] = vec4(0,0,-.5,1);
-	m[0][0] = 100;
-	m[1][1] = 100;
-	m[2][2] = 100;
-
-	m =  inverse(viewTransform) * m;
-
-	worldPos = vec3(m * vec4(pos,1));
+	worldPos = vec3(transform * vec4(pos,1));
 	gl_Position = eye * vec4(worldPos, 1);
 }

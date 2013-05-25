@@ -1,17 +1,14 @@
 #include "MyWindow.h"
 
-const char* title = "Micah Lamb's volumez";
+const char* title = "Ray Tracer";
 
 struct RayTracer : public Viewport, public Scene, public FPInput {
 	Shader shader;
-	mat4 transform;
-	UniformMat4 worldTransform;
-	UniformMat3 normalTransform;
-	UniformMat4 viewTransform;
 
-	UniformSampler reflections;
+	UniformSampler background;
+	UniformMat4 transform;
+	mat4 placeSquare;
 
-	CubeBackground background;
 	CubeMap* backgrounds[3];
 
 	float nearPlane, farPlane, fov;
@@ -20,18 +17,22 @@ struct RayTracer : public Viewport, public Scene, public FPInput {
 		Viewport(x,y,w,h)
 		,FPInput(4)
 		,nearPlane(.1f), farPlane(1001.f), fov(60.f)
-		,transform(1)
+		,placeSquare(1)
 	{
 		Scene::operator()(this);
 		shader("rayTracer.vert", "rayTracer.frag");
-		shader.enable();
-		worldTransform("worldTransform",&shader);
-		normalTransform("normalTransform",&shader);
-		viewTransform("viewTransform",&shader);
+		transform("transform", &shader);
+
 		Scene::globals.lights[0].color = vec3(1,1,1);
 		Scene::globals.lights[0].pos = vec3(0,0,25);
 
-		glEnable(GL_CULL_FACE);
+		//put square .5 units in front of viewer and scale by 100
+		placeSquare[3] = vec4(0,0,-.5,1);
+		placeSquare[0][0] = 100;
+		placeSquare[1][1] = 100;
+		placeSquare[2][2] = 100;
+
+		glDisable(GL_DEPTH_TEST);
 
 		#define STR(x) #x
 		#define CM(file) STR(cubemaps/clouds/##file)
@@ -47,47 +48,35 @@ struct RayTracer : public Viewport, public Scene, public FPInput {
 		backgrounds[2] = new CubeMap(hills, IL_ORIGIN_UPPER_LEFT);
 		#undef CM
 
-		reflections("reflections",&shader,backgrounds[0]);
-		background(backgrounds[0]);
-
+		background("background",&shader,backgrounds[2]);
 	}
 
 	void setBackground(int i){
 		shader.enable();
-		reflections = backgrounds[i];
-		background.set(backgrounds[i]);
+		background = backgrounds[i];
 	}
 
-	void setWorldTransform(mat4 m){
+	void Scene::draw(){
 		shader.enable();
-		worldTransform = m;
-		normalTransform = mat3(transpose(inverse(m)));
+		transform = inverse(Viewer::matrix()) * placeSquare;//put square in front of viewer
+		Shapes::square()->draw();
 	}
-
-	void Scene::draw(){}
 
 	void Viewport::draw(){
 		frame();
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		background.draw();
-
-		shader.enable();
-		viewTransform = matrix();
-		Shapes::square()->draw();
-	}
-	
-	void frame(){
 		FPInput::frame();
 		Scene::frame();
 
-		if (keys['.'])
-			setWorldTransform(scale(mat4(1),vec3(1) + vec3(Clock::delta)) * *worldTransform);
-		if (keys[','])
-			setWorldTransform(scale(mat4(1),vec3(1) - vec3(Clock::delta)) * *worldTransform);
-		if (keys['c'])
-			Scene::globals.lights[0].color = rainbowColors(.01);
+		((Scene*)this)->draw();
 
 		Clock::printFps(250);
+	}
+	
+	void frame(){
+		//put key handler code here
+		if (keys['c'])
+			Scene::globals.lights[0].color = rainbowColors(.01);//change the light color when held pressed
+
 	}
 
 	//called by the ViewportManager
@@ -101,14 +90,6 @@ struct RayTracer : public Viewport, public Scene, public FPInput {
 
 	virtual void mouseMove(int x, int y) {
 		FPInput::mouseMove(x, y);
-
-		//rotate worldTransform with right mouse
-		float w = 10;
-		if (mouseDown[1]){
-			mat4 m = rotate(mat4(1), mouseDelta.x*w*Clock::delta, vec3(0,1,0))
-				* rotate(mat4(1), -mouseDelta.y*w*Clock::delta, right());
-			transform = m * transform;
-		}
 	}
 
 	virtual void passiveMouseMove(int x, int y){
@@ -148,7 +129,9 @@ void init(void)
 	win.add(rt);
 }
 
-void init_glui(){}
+void init_glui(){
+
+}
 
 void display()
 {
@@ -158,19 +141,12 @@ void display()
 	printGLErrors("/display");
 }
 
-//make life easy for now
 void idle(){
 	glutPostRedisplay();
-	//display();
 }
 
-void reshape(int w, int h)
-{
-	int tx, ty, tw, th;
-	GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-	glViewport(tx,ty,tw,th);//only needed for clearing outside of win
-	glScissor(tx,ty,tw,th);
-	win.resize(tw,th);
+void reshape(int w, int h){
+	win.resize(w,h);
 	glutPostRedisplay();
 }
 
