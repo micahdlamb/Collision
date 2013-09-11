@@ -38,6 +38,7 @@ struct BoundingAABB;
 struct Texture;
 
 #include "Clock.h"
+#include "GLState.h"
 #include "Geometry.h"
 #include "helpers.h"
 #include "Viewport.h"

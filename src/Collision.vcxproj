@@ -80,6 +80,7 @@
     <ClCompile Include="helpers.cc" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GLState.cpp" />
+    <ClCompile Include="statics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Background.h" />
@@ -98,6 +99,7 @@
     <ClInclude Include="Framebuffer.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="GLState.h" />
     <ClInclude Include="Grid2d.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="helpers.h" />

@@ -4,6 +4,7 @@
 const char* title = "Glass Balls";
 
 const int NUMOBJECTS = 6;
+#define BOUNDS 15,30,15
 #define NUM_BUFFERS GLUT_SINGLE
 
 #define GRAVITY vec3(0,-100.f,0)
@@ -19,7 +20,7 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 		};
 		GLint numSpheres;
 		vec3 pad;
-		Sphere spheres[10];
+		Sphere spheres[20];
 
 		void operator()(){
 			UniformBlock::operator()(sizeof(Spheres)-sizeof(UniformBlock),10);
@@ -87,7 +88,7 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 		light = new Light(vec3(1,1,1), 2048, perspective(35.f, 1.f, 160.f, 250.f), glm::lookAt(vec3(125,160,-80),vec3(0,0,0),vec3(0,1,0)));
 		Scene::globals.lights[0].color = vec3(1,1,1);
 		Scene::globals.lights[0].pos = vec3(25,25,25);
-		bounds = vec3(15,30,15);
+		bounds = vec3(BOUNDS);
 		balls(-vec2(bounds.x,bounds.z), vec2(bounds.x,bounds.z), uvec2(2,2));
 
 		pickFb(new Texture(NULL,2048,2048,GL_RGB32UI,GL_RGB_INTEGER,GL_UNSIGNED_INT));
@@ -215,18 +216,22 @@ struct Ballz : public Viewport, public Scene, public FPInput {
 		FPInput::mouseButton(button, state, x, y);
 
 		if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
-			pickFb.bind();
-			Viewport::enable();
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			//pickFb.bind();
+			printGLErrors("pickDraw");
+			Pickable::bind(this);
+			//Viewport::enable();
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			balls.pickDraw();
-			Viewport::disable();
-			pickFb.unbind();
-
-			uvec3 index;
-			pickFb.read(&index,x,y,1,1,GL_RGB_INTEGER,GL_UNSIGNED_INT);
+			//Viewport::disable();
+			//pickFb.unbind();
+			Pickable::unbind();
+			//uvec3 index;
+			//pickFb.read(&index,x,y,1,1,GL_RGB_INTEGER,GL_UNSIGNED_INT);
+			uint index = Pickable::getId(x,y);
+			printGLErrors("/pickDraw");
 			//cout << "clicked: " << index.r << " " << index.g << " " << index.b << endl;
-			if (index.r < balls.objects.size())
-				select(index.r);
+			if (index < balls.objects.size())
+				select(index);
 		}
 
 		if (button == GLUT_RIGHT_BUTTON && state == GLUT_UP)

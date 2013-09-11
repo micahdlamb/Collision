@@ -11,6 +11,9 @@
     <ClCompile Include="GLState.cpp">
       <Filter>GL</Filter>
     </ClCompile>
+    <ClCompile Include="statics.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helpers.h">
@@ -152,6 +155,9 @@
       <Filter>Face</Filter>
     </ClInclude>
     <ClInclude Include="GlassBalls.h" />
+    <ClInclude Include="GLState.h">
+      <Filter>GL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">

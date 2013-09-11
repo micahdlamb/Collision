@@ -1,6 +1,4 @@
 #include "includes.h"
-namespace GLState {void init();};
-Scene* Scene::current=NULL;
 
 int main_window;
 uvec2 dim(1600,900);

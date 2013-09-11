@@ -6,6 +6,7 @@ struct Framebuffer {
 	GLuint gid;
 	vector<GLenum> buffers;
 	Framebuffer(){}
+	Framebuffer(Texture* texture){operator()(texture);}
 	Framebuffer(bool init){if (init) operator()();}
 	void operator()(){
 		glGenFramebuffers(1, &gid);
@@ -105,12 +106,16 @@ struct Framebuffer {
 	}
 };
 
+//Should be static functions, forced to be inline to avoid dependency loop
 inline void bind2FB(Texture* tex){
 	Framebuffer::instance().bind();
 	Framebuffer::instance().attach(tex);
 }
 
-
 inline void unbind2FB(){
 	Framebuffer::instance().unbind();
+}
+
+inline void readFB(void* value, GLuint x, GLuint y, GLuint w=1, GLuint h=1, GLenum format=GL_RGBA, GLenum type=GL_FLOAT, GLenum attachment=GL_COLOR_ATTACHMENT0){
+	Framebuffer::instance().read(value, x, y, w, h, format, type, attachment);
 }

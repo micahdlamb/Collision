@@ -45,7 +45,7 @@ struct AABB {
 
 layout(std140) uniform Spheres {
 	int numSpheres;
-	Sphere spheres[10];
+	Sphere spheres[20];
 };
 
 
