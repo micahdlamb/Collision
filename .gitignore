@@ -6,6 +6,6 @@
 src/old
 src/Release
 src/Debug
-Debug/
-Release/
-lib/bullet/Debug/
+/Debug/
+/Release/
+/lib/bullet/Debug/
