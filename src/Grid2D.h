@@ -2,14 +2,13 @@
 
 struct Grid2D {
 	//stores all intersection information for the handler
-	struct Result : public Intersect::Result, public pair<size_t,size_t> {
-		//let me copy derived into base
-		Result(Intersect::Result ir):Intersect::Result(ir){}
+	struct Intersection : public pair<size_t,size_t> {
+		vec3 pt;
 	};
 	
 	//intersect caller must pass one of these as an intersection handler
 	struct IntersectionHandler {
-		virtual void handleIntersection(Result r)=0;
+		virtual void handleIntersection(Intersection i)=0;
 	};
 
 	typedef glm::detail::tvec2<size_t> Cell;
@@ -46,7 +45,7 @@ struct Grid2D {
 	find intersections and call intersection handler
 	bvs: array of bounding volume pointers
 	ih: function to handle an intersection
-	-receives a Result object containing indices of the 2 bounding volumes & hit pt
+	-receives a Intersection object containing indices of the 2 bounding volumes & hit pt
 	*/
 	int intersections;
 	void intersect(vector<IBoundingVolume*>& bvs, IntersectionHandler* ih){
@@ -93,12 +92,12 @@ struct Grid2D {
 			for (auto j=cell2.begin(); j != cell2.end(); j++){
 				auto bv1 = (*bvs)[*i], bv2 = (*bvs)[*j];
 				if (bv1->sleeping && bv2->sleeping) continue;
-				Result r = bv1->intersect(bv2);
-				if (r.intersect){
-					r.first = *i;
-					r.second = *j;
+				Intersection x;
+				if (bv1->intersect(bv2, x.pt)){
+					x.first = *i;
+					x.second = *j;
 					intersections++;
-					ih->handleIntersection(r);
+					ih->handleIntersection(x);
 				}
 			}
 	}
@@ -109,12 +108,12 @@ struct Grid2D {
 			for (size_t j=i+1; j < cell.size(); j++){
 				auto bv1 = (*bvs)[cell[i]], bv2 = (*bvs)[cell[j]];
 				if (bv1->sleeping && bv2->sleeping) continue;
-				Result r = bv1->intersect(bv2);
-				if (r.intersect){
-					r.first = cell[i];
-					r.second = cell[j];
+				Intersection x;
+				if (bv1->intersect(bv2, x.pt)){
+					x.first = cell[i];
+					x.second = cell[j];
 					intersections++;
-					ih->handleIntersection(r);
+					ih->handleIntersection(x);
 				}
 			}
 	}

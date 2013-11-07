@@ -102,7 +102,7 @@ struct ControlCurve : public Viewport {
 		return getPositions(curvePts);
 	}
 
-	//anyway to template a field extraction function?
+	//any way to template a field extraction function?
 	vector<vec2> getPositions(vector<Pt>& pts){
 		vector<vec2> r;
 		for (size_t i=0; i < pts.size(); i++)

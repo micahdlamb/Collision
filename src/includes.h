@@ -1,5 +1,6 @@
 //Include everything in a valid order, less efficient compiling but sick of dealing with dependency loops
 #include <omp.h>
+#include <type_traits>
 #include <Windows.h>
 #include <assert.h>
 #include <iostream>

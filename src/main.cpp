@@ -4,20 +4,17 @@ int main_window;
 uvec2 dim(1600,900);
 #define NUM_BUFFERS GLUT_DOUBLE
 
-//#include "lab3.h"
+#include "lab3.h"
 //#include "Volume.h"
 //#include "Tessellation.h"
-//#include "Tessellation2.h"
 //#include "RayTracer.h"
-#include "GlassBalls.h"
+//#include "GlassBalls.h"
 //#include "Bullet.h"
-//#include "Lens.h"
 //#include "Face.h"
 
-//outdated
-//#include "cubez.h"
-//#include "Fireworks.h"
-//#include "Picking.h"
+//incomplete
+//#include "Lens.h"
+//#include "Tessellation2.h"
 
 int main (int argc, char* argv[])
 {

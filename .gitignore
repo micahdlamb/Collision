@@ -2,10 +2,10 @@
 *.suo
 *.sdf
 *.normals
-src/MRbrain
-src/Brain1.h
-src/Brain2.h
-src/lib
+*.opensdf
 src/old
 src/Release
 src/Debug
+Debug
+Release
+lib/bullet/Debug

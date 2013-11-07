@@ -48,38 +48,17 @@ struct Frustum {
 	}
 };
 
-struct Intersect {
-	//info about an intersection
-	struct Result {
-		bool intersect;
-		vec3 pt;
-	};
-};
-
 struct IBoundingVolume {
 	vec3 center;
 	bool sleeping;
 	IBoundingVolume():sleeping(false){}
-	virtual Intersect::Result intersect(IBoundingVolume* bv)=0;
-	virtual Intersect::Result intersect(BoundingSphere* bs)=0;
-	virtual Intersect::Result intersect(BoundingAABB* ba)=0;
+	virtual bool intersect(IBoundingVolume* bv, vec3& pt)=0;
+	virtual bool intersect(BoundingSphere* bs, vec3& pt)=0;
+	virtual bool intersect(BoundingAABB* ba, vec3& pt)=0;
 	virtual bool inside(Frustum& f)=0;
 	virtual bool intersect(Plane p)=0;
 	virtual void transform(mat4 m, IBoundingVolume*& result)=0;//allocates new BV if result == NULL
 	virtual ~IBoundingVolume(){}
-
-	/*
-	Intersect::Result intersect(IBoundingVolume* bv){
-		//do with polymorphism eventually
-		auto s1 = dynamic_cast<Sphere*>(this);
-		auto s2 = dynamic_cast<Sphere*>(bv);
-		if (s1 && s2)
-			return Intersect::sphere_sphere(*s1, *s2);
-
-		assert(false && "Unsupported bounding volume intersection");
-		return Intersect::Result();
-	}
-	*/
 };
 
 struct BoundingAABB : public IBoundingVolume {
@@ -99,20 +78,20 @@ struct BoundingAABB : public IBoundingVolume {
 		center = (min + max) / 2.f;
 	}
 
-	Intersect::Result intersect(IBoundingVolume* bv){
-		return bv->intersect(this);
+	bool intersect(IBoundingVolume* bv, vec3& pt){
+		return bv->intersect(this, pt);
 	}
 
 	//not implemented
-	Intersect::Result intersect(BoundingSphere* bs){
+	bool intersect(BoundingSphere* bs, vec3& pt){
 		assert(false && "Unsupported bounding volume intersection");
-		return Intersect::Result();
+		return false;
 	}
 
 	//not implemented
-	Intersect::Result intersect(BoundingAABB* ba){
+	bool intersect(BoundingAABB* ba, vec3& pt){
 		assert(false && "Unsupported bounding volume intersection");
-		return Intersect::Result();
+		return false;
 	}
 
 	//not implemented
@@ -155,29 +134,27 @@ struct BoundingSphere : public IBoundingVolume {
 		this->radius = radius;
 	}
 
-	Intersect::Result intersect(IBoundingVolume* bv){
-		return bv->intersect(this);
+	bool intersect(IBoundingVolume* bv, vec3& pt){
+		return bv->intersect(this, pt);
 	}
 
-	Intersect::Result intersect(BoundingSphere* bs){
+	bool intersect(BoundingSphere* bs, vec3& pt){
 		auto& a = *this, b = *bs;
 		vec3 d = b.center - a.center;
 		float dist2 = dot(d,d);
 		float rsum = a.radius + b.radius;
 
-		Intersect::Result r;
-		if (dist2 <= rsum * rsum){
-			r.intersect = true;
-			r.pt = a.center + d * a.radius / (a.radius + b.radius);//somewhere between the overlap
-		} else 
-			r.intersect = false;
-		return r;
+		if (dist2 > rsum * rsum)
+			return false;
+
+		pt = a.center + d * a.radius / (a.radius + b.radius);//somewhere between the overlap
+		return true;
 	}
 
 	//not implemented
-	Intersect::Result intersect(BoundingAABB* ba){
+	bool intersect(BoundingAABB* ba, vec3& pt){
 		assert(false && "Unsupported bounding volume intersection");
-		return Intersect::Result();
+		return false;
 	}
 
 	virtual bool inside(Frustum& f){

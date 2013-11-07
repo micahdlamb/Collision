@@ -30,6 +30,7 @@ enum Controls {
 	,SAVE
 	,CUBE
 	,PYRAMID
+	,SPRING
 	,TERRAIN
 	,LOAD_FILE
 	,SAVE_FILE
@@ -99,6 +100,9 @@ void onButton(int id){
 			break;
 		case PYRAMID:
 			surface->pyramid();
+			break;
+		case SPRING:
+			surface->spring();
 			break;
 		case TERRAIN:
 			surface->terrain();
@@ -180,6 +184,7 @@ void init_glui(){
 	GLUI_Panel *shapesPanel = glui->add_panel ( "Shapes" );
 	glui->add_button_to_panel( shapesPanel, "Cube", CUBE, onButton );
 	glui->add_button_to_panel( shapesPanel, "Pyramid", PYRAMID, onButton );
+	glui->add_button_to_panel( shapesPanel, "Spring", SPRING, onButton );
 	glui->add_button_to_panel( shapesPanel, "Terrain", TERRAIN, onButton );
 	glui->add_button_to_panel( shapesPanel, "Load File", LOAD_FILE, onButton );
 	glui->add_edittext_to_panel(shapesPanel, "", GLUI_EDITTEXT_TEXT, load_file);

@@ -24,7 +24,7 @@ struct Surface : public Viewport, public Scene, public FPInput {
 
 	Smoother<I> smoother;
 
-	enum Mode {NOTHING,QUADS,TRIANGLES,CURVE,CUBE,PYRAMID,TERRAIN,CATMULL,DOO_SABIN,LOOP};
+	enum Mode {NOTHING,TRIANGLES,QUADS,CURVE,CUBE,PYRAMID,SPRING,TERRAIN,CATMULL,DOO_SABIN,LOOP};
 
 	Mode mode;
 	vector<vec3> vertices, normals;
@@ -125,10 +125,6 @@ struct Surface : public Viewport, public Scene, public FPInput {
 			default:
 				return GL_QUADS;
 		}
-	}
-
-	Mode getMode(int faceSize){
-		return faceSize==4?QUADS:TRIANGLES;
 	}
 
 	int faceSize(){
@@ -381,6 +377,38 @@ struct Surface : public Viewport, public Scene, public FPInput {
 		vertices.assign((vec3*)v, (vec3*)(v + 15));//strange that casts required
 		indices.assign(i, i + 18);
 		setGeometry(PYRAMID);
+	}
+
+
+	vector<vec2> circlePts(float radius, int pts){
+		vector<vec2> r;
+		float dtheta = 2*PI / pts;
+		for (float theta=0; theta < 2*PI; theta+=dtheta)
+			r.push_back(vec2(cos(theta), sin(theta)) * radius);
+		return r;
+	}
+
+	vector<vec3> helixPts(int loops, float radius, float height, int pts){
+		vector<vec3> r;
+		float rads = 2*PI * loops;
+		float dtheta = rads / pts;
+		float dy = height / pts;
+
+		for (float theta=0, y=0; theta < rads; theta+=dtheta, y+=dy)
+			r.push_back(vec3(cos(theta) * radius, y, -sin(theta) * radius));
+		return r;
+	}
+
+	void spring(int loops=5, float radius=1, float thickness=.5, float height=5, int detail=25){
+
+		auto circle = circlePts(thickness, detail);
+		auto helix = helixPts(loops, radius, height, loops * detail);
+
+		vertices = Surfaces::sweep(circle, helix);
+		strideX = (I)circle.size();//store strideX for use in other smoothing funcs
+		indices = genGridIndices((I)vertices.size(), strideX, false, true);
+
+		setGeometry(QUADS);
 	}
 
 	void terrain(){

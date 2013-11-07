@@ -204,10 +204,9 @@ struct BallManager : public Grid2D::IntersectionHandler {
 
 		for (auto i=objects.begin(); i != objects.end(); i++){
 			//collide with eye
-			auto r = eyeBound.intersect((*i)->boundingVolume);
-			if (r.intersect && dot((*i)->vel - eyeBall.vel, eyeBall.pos - (*i)->pos) > FLT_EPSILON){
+			vec3 pt;
+			if (eyeBound.intersect((*i)->boundingVolume, pt) && dot((*i)->vel - eyeBall.vel, eyeBall.pos - (*i)->pos) > FLT_EPSILON)
 				collide(**i, eyeBall, eyeBall.pos - (*i)->boundingVolume->center);
-			}
 		}
 	}
 
@@ -223,9 +222,9 @@ struct BallManager : public Grid2D::IntersectionHandler {
 	}
 
 	//handle intersection by calling handle collision
-	void handleIntersection(Grid2D::Result r){
-		auto& b1 = *objects[r.first];
-		auto& b2 = *objects[r.second];
+	void handleIntersection(Grid2D::Intersection i){
+		auto& b1 = *objects[i.first];
+		auto& b2 = *objects[i.second];
 		handleCollision(b1,b2);
 	}
 

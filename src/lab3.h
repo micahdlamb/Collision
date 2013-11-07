@@ -64,8 +64,8 @@ void reshape(int w, int h)
 {
 	int tx, ty, tw, th;
 	GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-	glViewport(tx,ty,tw,th);//only needed for clearing outside of win
-	glScissor(tx,ty,tw,th);
+	//glViewport(tx,ty,tw,th);//only needed for clearing outside of win
+	//glScissor(tx,ty,tw,th);
 	win.resize(tw,th);
 	glutPostRedisplay();
 }
