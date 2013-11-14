@@ -8,4 +8,4 @@ src/Release
 src/Debug
 /Debug/
 /Release/
-/ipch
+/ipch/
