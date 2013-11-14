@@ -411,7 +411,7 @@ struct Surface : public Viewport, public Scene, public FPInput {
 
 	//must have even number of points >= 6
 	template <class I>
-	vector<I> quadulate(I begin, I end, I center){
+	vector<I> quadulate(I begin, I end, I center, bool reverse=false){
 		vector<I> indices;
 		for (I i = begin; i < end; i += 2){
 			indices.push_back(i);
@@ -419,19 +419,9 @@ struct Surface : public Viewport, public Scene, public FPInput {
 			indices.push_back((i+2 == end) ? begin : i+2);
 			indices.push_back(center);
 		}
-		return indices;
-	}
-
-	//must have even number of points >= 6
-	template <class I>
-	vector<I> rquadulate(I begin, I end, I center){
-		vector<I> indices;
-		for (I i = begin; i < end; i += 2){
-			indices.push_back((i+2 == end) ? begin : i+2);
-			indices.push_back(i+1);
-			indices.push_back(i);
-			indices.push_back(center);
-		}
+        if (reverse)
+            for (size_t i=0; i < indices.size(); i+=4)
+                swap(indices[i], indices[i+2]);
 		return indices;
 	}
 
@@ -453,7 +443,7 @@ struct Surface : public Viewport, public Scene, public FPInput {
 		//triangulateQuads(indices);
 
 		//make end caps
-		auto cap1 = rquadulate<I>(vertices.size()-circle.size(), vertices.size(), vertices.size());
+		auto cap1 = quadulate<I>(vertices.size()-circle.size(), vertices.size(), vertices.size(), true);
 		vertices.push_back(helix.back());
 		auto cap2 = quadulate<I>(0, circle.size(), vertices.size());
 		vertices.push_back(helix[0]);
