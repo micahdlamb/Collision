@@ -232,35 +232,16 @@ struct Surface : public Viewport, public Scene, public FPInput {
 				vertices = Surfaces::extrusion(curve1);
 				break;
 			case SWEEP:
-				vertices = Surfaces::sweep(curve1, curve2);
+				vertices = Surfaces::sweep(curve1, curve2, extrude);
 				break;
 		}
 
 		strideX = (I)curve1.size();//store strideX for use in other surface funcs
-		indices = genGridIndices((I)vertices.size(), strideX, wrapX(), wrapY());
+		indices = gridIndices((I)vertices.size(), strideX, wrapX(), wrapY());
 		setGeometry(CURVE);
 	}
 
-	//could make more efficient by creating dif for loops for dif inputs, this is more compact though
-	vector<I> genGridIndices(I numVertices, I strideX, bool wrapX, bool wrapY){
-		vector<I> r;
-		r.reserve(numVertices*4);
-		I wx = wrapX ? 0 : strideX;
-		for (I i=0; i < numVertices-wx; ++i){
-			I o = 1;
-			if (i % strideX == strideX-1){
-				if (wrapY) o = -(strideX-1);
-				else continue;
-			}
-			r.push_back(i);
-			r.push_back(i+o);
-			r.push_back((i+o+strideX)%numVertices);
-			r.push_back((i+strideX)%numVertices);
-		}
-		return r;
-	}
-
-	//convert vertices to grid
+	//convert vertices to grid (2d array vector)
 	vector<vector<vec3 >> unflatten(){
 		vector<vector<vec3 >> grid(vertices.size() / strideX);
 		for (U i=0,x=0; i < vertices.size(); i+=strideX,x++){
@@ -271,6 +252,7 @@ struct Surface : public Viewport, public Scene, public FPInput {
 		return grid;
 	}
 
+	//convert grid to 
 	void flatten(vector<vector<vec3 >> grid, bool wrapX, bool wrapY){
 		vertices.clear();
 		strideX = grid[0].size();
@@ -280,7 +262,7 @@ struct Surface : public Viewport, public Scene, public FPInput {
 			for (U y=0; y < strideX; y++)
 				vertices.push_back(grid[x][y]);
 		}
-		indices = genGridIndices((I)vertices.size(), strideX, wrapX, wrapY);
+		indices = gridIndices((I)vertices.size(), strideX, wrapX, wrapY);
 	}
 
 	void surface(int type){
@@ -380,34 +362,103 @@ struct Surface : public Viewport, public Scene, public FPInput {
 	}
 
 
-	vector<vec2> circlePts(float radius, int pts){
-		vector<vec2> r;
-		float dtheta = 2*PI / pts;
-		for (float theta=0; theta < 2*PI; theta+=dtheta)
-			r.push_back(vec2(cos(theta), sin(theta)) * radius);
-		return r;
+	vector<vec2> circlePts(float radius, int numPts){
+		vector<vec2> pts;
+		float dtheta = 2*PI / numPts;
+		float EPS = dtheta / 2;
+		for (float theta=0; theta < 2*PI - EPS; theta+=dtheta)
+			pts.push_back(vec2(cos(theta), sin(theta)) * radius);
+		return pts;
 	}
 
-	vector<vec3> helixPts(int loops, float radius, float height, int pts){
-		vector<vec3> r;
+	vector<vec3> helixPts(float loops, float radius, float height, int numPts){
+		vector<vec3> pts;
 		float rads = 2*PI * loops;
-		float dtheta = rads / pts;
-		float dy = height / pts;
+		float dtheta = rads / numPts;
+		float dy = height / numPts;
 
-		for (float theta=0, y=0; theta < rads; theta+=dtheta, y+=dy)
-			r.push_back(vec3(cos(theta) * radius, y, -sin(theta) * radius));
-		return r;
+		for (float theta=0, y=-height/2; theta < rads; theta+=dtheta, y+=dy)
+			pts.push_back(vec3(cos(theta) * radius, y, -sin(theta) * radius));
+		return pts;
 	}
 
-	void spring(int loops=5, float radius=1, float thickness=.5, float height=5, int detail=25){
+    void triangulateQuads(vector<I>& indices){
+        vector<I> triIndices;
+        for (size_t i=0; i < indices.size(); i+=4){
+            triIndices.push_back(indices[i]);
+            triIndices.push_back(indices[i+1]);
+            triIndices.push_back(indices[i+3]);
+            triIndices.push_back(indices[i+1]);
+            triIndices.push_back(indices[i+2]);
+            triIndices.push_back(indices[i+3]);
+        }
+        indices = triIndices;
+    }
 
-		auto circle = circlePts(thickness, detail);
-		auto helix = helixPts(loops, radius, height, loops * detail);
+	//fill in a shape with triangles
+	template <class I>
+	vector<I> triangulate(I begin, I end, I pt, bool reverse=false){
+		vector<I> indices;
+		for (auto i=begin; i < end; i++){
+			indices.push_back(i);
+			indices.push_back((i == end-1) ? begin : i+1);
+			indices.push_back(pt);
+		}
+		if (reverse)
+			std::reverse(indices.begin(), indices.end());
+		return indices;
+	}
 
+	//must have even number of points >= 6
+	template <class I>
+	vector<I> quadulate(I begin, I end, I center){
+		vector<I> indices;
+		for (I i = begin; i < end; i += 2){
+			indices.push_back(i);
+			indices.push_back(i+1);
+			indices.push_back((i+2 == end) ? begin : i+2);
+			indices.push_back(center);
+		}
+		return indices;
+	}
+
+	//must have even number of points >= 6
+	template <class I>
+	vector<I> rquadulate(I begin, I end, I center){
+		vector<I> indices;
+		for (I i = begin; i < end; i += 2){
+			indices.push_back((i+2 == end) ? begin : i+2);
+			indices.push_back(i+1);
+			indices.push_back(i);
+			indices.push_back(center);
+		}
+		return indices;
+	}
+
+	void spring(int loops=5, float radius=.5, float thickness=.2, float height=2.5, int verts=10000){
+		float helixLen = sqrt(pow(loops * PI * radius * 2, 2) + pow(height, 2));
+		float circleLen = PI * thickness * 2;
+		float ratio = circleLen / helixLen;
+		int helixVerts = sqrt(verts / ratio);
+		int circleVerts = verts / helixVerts;
+		//make sure circleVerts >= 6 and even so the quadFan func will work
+		if (circleVerts < 6) circleVerts = 6;
+		if (circleVerts % 2) circleVerts++;
+
+		auto circle = circlePts(thickness, circleVerts);
+		auto helix = helixPts(loops, radius, height, helixVerts);
 		vertices = Surfaces::sweep(circle, helix);
 		strideX = (I)circle.size();//store strideX for use in other smoothing funcs
-		indices = genGridIndices((I)vertices.size(), strideX, false, true);
+		indices = gridIndices((I)vertices.size(), strideX, false, true);
+		//triangulateQuads(indices);
 
+		//make end caps
+		auto cap1 = rquadulate<I>(vertices.size()-circle.size(), vertices.size(), vertices.size());
+		vertices.push_back(helix.back());
+		auto cap2 = quadulate<I>(0, circle.size(), vertices.size());
+		vertices.push_back(helix[0]);
+		indices.insert(indices.end(), cap1.begin(), cap1.end());
+		indices.insert(indices.end(), cap2.begin(), cap2.end());
 		setGeometry(QUADS);
 	}
 

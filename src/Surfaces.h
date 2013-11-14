@@ -14,23 +14,23 @@ namespace Surfaces {
 	}
 	*/
 	vector<vec3> revolution(vector<vec2> curve){
-		vector<vec3> r;
+		vector<vec3> pts;
 		mat4 delta = rotate(mat4(1), 360.f/slices, vec3(0,1,0));
 		mat4 spin;
 		for (int i=0; i < slices; i++, spin *= delta)
 			for (size_t j=0; j < curve.size(); j++)
-				r.push_back(vec3(spin * vec4(curve[j],0,1)));
+				pts.push_back(vec3(spin * vec4(curve[j],0,1)));
 
-		return r;
+		return pts;
 	}
 
 	vector<vec3> extrusion(vector<vec2> curve){
-		vector<vec3> r;
+		vector<vec3> pts;
 		for (int i=0; i < 3; i++)
 			for (size_t j=0; j < curve.size(); j++)
-				r.push_back((vec3(curve[j],(-1+i)*extrude)).swizzle(Z,X,Y));
+				pts.push_back((vec3(curve[j],(-1+i)*extrude)).swizzle(Z,X,Y));
 
-		return r;
+		return pts;
 	}
 
 	//some template conditional way to do this?
@@ -38,7 +38,7 @@ namespace Surfaces {
 	inline vec3 toVec3(vec2 v){return vec3(v.x,0, -v.y);}
 	
 	template<class V>
-	vector<vec3> sweep(vector<vec2> around, vector<V> along){
+	vector<vec3> sweep(vector<vec2> around, vector<V> along, float scale=1){
 		#define FORWARD(i) toVec3(i==0 ? along[i+1]-along[i] : (i==along.size()-1 ? along[i] - along[i-1] : along[i+1]-along[i-1]))
 		
 		vector<vec3> r;
@@ -53,7 +53,7 @@ namespace Surfaces {
 
 			for (size_t j=0; j < around.size(); j++){
 				vec3 center = toVec3(along[i]);//use template conditional when I can figure it out
-				r[i*around.size() + j] = center + x * extrude * around[j].x + y * extrude * around[j].y;
+				r[i*around.size() + j] = center + x * scale * around[j].x + y * scale * around[j].y;
 			}
 		}
 
