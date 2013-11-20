@@ -373,11 +373,12 @@ struct Surface : public Viewport, public Scene, public FPInput {
 
 	vector<vec3> helixPts(float loops, float radius, float height, int numPts){
 		vector<vec3> pts;
-		float rads = 2*PI * loops;
+		numPts--;//since loop adds extra point
+        float rads = 2*PI * loops;
 		float dtheta = rads / numPts;
 		float dy = height / numPts;
-
-		for (float theta=0, y=-height/2; theta < rads; theta+=dtheta, y+=dy)
+        float EPS = dtheta / 2;
+		for (float theta=0, y=-height/2; abs(theta) < abs(rads)+EPS; theta+=dtheta, y+=dy)
 			pts.push_back(vec3(cos(theta) * radius, y, -sin(theta) * radius));
 		return pts;
 	}
@@ -419,13 +420,13 @@ struct Surface : public Viewport, public Scene, public FPInput {
 			indices.push_back((i+2 == end) ? begin : i+2);
 			indices.push_back(center);
 		}
-        if (reverse)
-            for (size_t i=0; i < indices.size(); i+=4)
-                swap(indices[i], indices[i+2]);
+		if (reverse)
+			for (size_t i=0; i < indices.size(); i+=4)
+				swap(indices[i], indices[i+2]);
 		return indices;
 	}
 
-	void spring(int loops=5, float radius=.5, float thickness=.2, float height=2.5, int verts=10000){
+	void spring(float loops=5, float radius=.1, float thickness=.05, float height=1, int verts=2000){
 		float helixLen = sqrt(pow(loops * PI * radius * 2, 2) + pow(height, 2));
 		float circleLen = PI * thickness * 2;
 		float ratio = circleLen / helixLen;
@@ -435,21 +436,22 @@ struct Surface : public Viewport, public Scene, public FPInput {
 		if (circleVerts < 6) circleVerts = 6;
 		if (circleVerts % 2) circleVerts++;
 
+		//generate helix quads
 		auto circle = circlePts(thickness, circleVerts);
 		auto helix = helixPts(loops, radius, height, helixVerts);
 		vertices = Surfaces::sweep(circle, helix);
 		strideX = (I)circle.size();//store strideX for use in other smoothing funcs
 		indices = gridIndices((I)vertices.size(), strideX, false, true);
-		//triangulateQuads(indices);
 
-		//make end caps
+		//generate caps quads
 		auto cap1 = quadulate<I>(vertices.size()-circle.size(), vertices.size(), vertices.size(), true);
 		vertices.push_back(helix.back());
 		auto cap2 = quadulate<I>(0, circle.size(), vertices.size());
 		vertices.push_back(helix[0]);
 		indices.insert(indices.end(), cap1.begin(), cap1.end());
 		indices.insert(indices.end(), cap2.begin(), cap2.end());
-		setGeometry(QUADS);
+		
+        setGeometry(QUADS);
 	}
 
 	void terrain(){

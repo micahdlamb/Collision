@@ -43,13 +43,10 @@ namespace Surfaces {
 		
 		vector<vec3> r;
 		r.resize(along.size()*around.size());
-		#pragma omp parallel for
-		for (int i=0; i < (int)along.size(); i++){
-			vec3 forward = FORWARD(i)//vec3(i != along.size()-1 ? along[i+1]-along[i] : along[i] - along[i-1], 0)
-				,x = normalize(perp(vec3(0,1,0), forward));
-			//if (dot(vec3(1,0,0), forward) < 0)//found through guess and check
-				//x *= -1;
-			vec3 y = normalize(cross(forward, x));
+		for (size_t i=0; i < along.size(); i++){
+			vec3 forward = FORWARD(i)
+				,x = normalize(cross(forward, vec3(0,1,0)))
+			    ,y = normalize(cross(x, forward));
 
 			for (size_t j=0; j < around.size(); j++){
 				vec3 center = toVec3(along[i]);//use template conditional when I can figure it out
