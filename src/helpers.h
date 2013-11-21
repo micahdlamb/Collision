@@ -274,19 +274,19 @@ Array2d<vec3> computeNormals(Array2d<T>& heights){
 }
 
 template <class I>
-vector<I> gridIndices(I numVertices, I strideX, bool wrapX, bool wrapY){
+vector<I> gridIndices(I numVertices, I stride, bool wrapX, bool wrapY){
 	vector<I> indices;
 	indices.reserve(numVertices*4);
-	I wx = wrapX ? 0 : strideX;
+	I wx = wrapX ? 0 : stride;
 	for (I i=0; i < numVertices-wx; ++i){
 		I o = 1;
-		if (i % strideX == strideX-1){
-			if (wrapY) o = -(strideX-1);
+		if (i % stride == stride-1){
+			if (wrapY) o = -(stride-1);
 			else continue;
 		}
 		indices.push_back(i);
-		indices.push_back((i+strideX)%numVertices);
-		indices.push_back((i+o+strideX)%numVertices);
+		indices.push_back((i+stride)%numVertices);
+		indices.push_back((i+o+stride)%numVertices);
 		indices.push_back(i+o);
 	}
 	return indices;

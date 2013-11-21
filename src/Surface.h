@@ -412,7 +412,7 @@ struct Surface : public Viewport, public Scene, public FPInput {
 
 	//must have even number of points >= 6
 	template <class I>
-	vector<I> quadulate(I begin, I end, I center, bool reverse=false){
+	vector<I> quadFan(I begin, I end, I center, bool reverse=false){
 		vector<I> indices;
 		for (I i = begin; i < end; i += 2){
 			indices.push_back(i);
@@ -426,7 +426,7 @@ struct Surface : public Viewport, public Scene, public FPInput {
 		return indices;
 	}
 
-	void spring(float loops=5, float radius=.1, float thickness=.05, float height=1, int verts=2000){
+	void spring(float loops=5, float radius=.1, float thickness=.05, float height=1, int verts=2000, bool smoothCaps=false){
 		float helixLen = sqrt(pow(loops * PI * radius * 2, 2) + pow(height, 2));
 		float circleLen = PI * thickness * 2;
 		float ratio = circleLen / helixLen;
@@ -444,13 +444,27 @@ struct Surface : public Viewport, public Scene, public FPInput {
 		indices = gridIndices((I)vertices.size(), strideX, false, true);
 
 		//generate caps quads
-		auto cap1 = quadulate<I>(vertices.size()-circle.size(), vertices.size(), vertices.size(), true);
-		vertices.push_back(helix.back());
-		auto cap2 = quadulate<I>(0, circle.size(), vertices.size());
-		vertices.push_back(helix[0]);
-		indices.insert(indices.end(), cap1.begin(), cap1.end());
-		indices.insert(indices.end(), cap2.begin(), cap2.end());
-		
+		if (smoothCaps){
+            auto cap1 = quadFan<I>(vertices.size()-circle.size(), vertices.size(), vertices.size(), true);
+		    vertices.push_back(helix.back());
+		    auto cap2 = quadFan<I>(0, circle.size(), vertices.size());
+		    vertices.push_back(helix[0]);
+		    indices.insert(indices.end(), cap1.begin(), cap1.end());
+		    indices.insert(indices.end(), cap2.begin(), cap2.end());
+		}
+        else {
+            auto helixEnd = vertices.size();
+            vertices.insert(vertices.end(), vertices.begin(), vertices.begin() + circle.size());
+            auto cap1 = quadFan<I>(vertices.size()-circle.size(), vertices.size(), vertices.size());
+            vertices.push_back(helix[0]);
+
+            vertices.insert(vertices.end(), &vertices[helixEnd - circle.size()], &vertices[helixEnd]);
+            auto cap2 = quadFan<I>(vertices.size()-circle.size(), vertices.size(), vertices.size(), true);
+            vertices.push_back(helix.back());
+		    
+            indices.insert(indices.end(), cap1.begin(), cap1.end());
+		    indices.insert(indices.end(), cap2.begin(), cap2.end());
+        }
         setGeometry(QUADS);
 	}
 
